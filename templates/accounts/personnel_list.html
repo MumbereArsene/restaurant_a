@@ -1,0 +1,45 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Personnel" %}</h1>
+  <a href="{% url 'accounts:personnel_create' %}" class="btn-primary btn-sm">+ {% trans "Nouveau compte" %}</a>
+</div>
+
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{% trans "Utilisateur" %}</th>
+        <th>{% trans "Nom" %}</th>
+        <th>{% trans "Tél." %}</th>
+        <th>{% trans "Rôle" %}</th>
+        <th>{% trans "Actif" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+        <tr>
+          <td class="font-medium">{{ u.username }}</td>
+          <td>{{ u.get_full_name|default:"—" }}</td>
+          <td>{{ u.phone|default:"—" }}</td>
+          <td><span class="badge-paid">{{ u.get_role_display }}</span></td>
+          <td>
+            {% if u.is_active %}<span class="badge-free">{% trans "Oui" %}</span>{% else %}<span class="badge-cancel">{% trans "Non" %}</span>{% endif %}
+          </td>
+          <td>
+            <div class="flex gap-1.5">
+              <a href="{% url 'accounts:personnel_update' pk=u.pk %}" class="btn-ghost btn-sm">{% trans "Modifier" %}</a>
+              {% if u != user %}
+                <a href="{% url 'accounts:personnel_delete' pk=u.pk %}" class="btn-danger btn-sm">{% trans "Supprimer" %}</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

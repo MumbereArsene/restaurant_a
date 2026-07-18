@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Commande envoyée" %} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<section class="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-5 py-16 text-center">
+  <div class="reveal flex h-16 w-16 items-center justify-center rounded-full bg-vermilion text-2xl font-bold text-white">✓</div>
+  <p class="reveal reveal-delay-1 mt-6 text-[11px] font-semibold uppercase tracking-[0.22em] text-vermilion">
+    {% blocktrans with n=table.number %}Table {{ n }}{% endblocktrans %}
+  </p>
+  <h1 class="reveal reveal-delay-1 mt-2 font-display text-3xl font-bold tracking-tight">{% trans "Commande envoyée" %}</h1>
+  <p class="reveal reveal-delay-2 mt-3 text-ink-soft">
+    {% blocktrans with id=order.pk %}N°{{ id }} — transmise en cuisine.{% endblocktrans %}
+  </p>
+  <p class="reveal reveal-delay-2 mt-6 font-display text-3xl font-bold tabular-nums">{{ order.total }} {{ CURRENCY }}</p>
+  <p class="mt-2 text-xs text-ink-soft">{% trans "Paiement en espèces auprès du serveur." %}</p>
+  <a href="{% url 'menu:public' %}" class="btn-ink mt-10">{% trans "Commander encore" %}</a>
+</section>
+{% endblock %}

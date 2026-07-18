@@ -1,0 +1,26 @@
+{% load i18n %}
+<div id="table-board">
+  <div class="mb-6 flex flex-wrap gap-3 text-sm font-bold">
+    <span class="rounded-full bg-emerald-100 px-3 py-1 text-ok">{{ tables_free }} {% trans "libres" %}</span>
+    <span class="rounded-full bg-orange-100 px-3 py-1 text-orange-800">{{ tables_busy }} {% trans "occupées" %}</span>
+  </div>
+  {% if tables %}
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+      {% for table in tables %}
+        <div class="rounded-2xl border p-4 text-center transition
+          {% if table.status == 'occupee' %}border-vermilion/40 bg-ink text-white{% else %}border-line bg-white{% endif %}">
+          <p class="font-display text-2xl font-extrabold">{{ table.number }}</p>
+          <p class="mt-1 text-[10px] font-bold uppercase tracking-wider
+            {% if table.status == 'occupee' %}text-vermilion{% else %}text-ok{% endif %}">
+            {{ table.get_status_display }}
+          </p>
+          <p class="mt-1 text-[11px] {% if table.status == 'occupee' %}text-white/45{% else %}text-ink-soft{% endif %}">
+            {{ table.capacity }} {% trans "pers." %}
+          </p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-sm text-ink-soft">{% trans "Aucune table configurée pour le moment." %}</p>
+  {% endif %}
+</div>

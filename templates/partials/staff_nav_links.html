@@ -1,0 +1,69 @@
+{% load i18n %}
+{% with ns=request.resolver_match.namespace view=request.resolver_match.view_name %}
+{% if user.can_view_dashboard %}
+  <a href="{% url 'core:dashboard' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if view == 'core:dashboard' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Tableau de bord" %}
+  </a>
+{% endif %}
+<a href="{% url 'orders:staff_list' %}"
+   {% if mobile %}data-nav-close{% endif %}
+   class="rounded-xl px-3 py-2.5 text-sm transition {% if ns == 'orders' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+  {% trans "Commandes" %}
+</a>
+{% if user.can_free_tables %}
+  <a href="{% url 'tables:list' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if ns == 'tables' and 'serveur' not in request.path and 'liberer' not in request.path %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Tables" %}
+  </a>
+  <a href="{% url 'tables:serveur_home' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if 'serveur' in request.path or 'liberer' in request.path %}bg-vermilion/90 font-bold text-ink{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Espace serveur" %}
+  </a>
+{% endif %}
+{% if user.can_manage_reservations %}
+  <a href="{% url 'reservations:staff_list' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if ns == 'reservations' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Réservations" %}
+  </a>
+{% endif %}
+{% if user.can_manage_menu %}
+  <a href="{% url 'menu:staff' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if ns == 'menu' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Menu" %}
+  </a>
+{% endif %}
+{% if user.can_access_cash %}
+  <a href="{% url 'cash:ledger' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if ns == 'cash' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Caisse" %}
+  </a>
+{% endif %}
+{% if user.can_manage_personnel %}
+  <a href="{% url 'accounts:personnel_list' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if 'personnel' in view %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Personnel" %}
+  </a>
+{% endif %}
+{% if user.can_edit_settings %}
+  <a href="{% url 'core:settings' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if view == 'core:settings' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Paramètres" %}
+  </a>
+{% endif %}
+{% if user.can_view_audit %}
+  <a href="{% url 'core:audit' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if view == 'core:audit' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Journal" %}
+  </a>
+{% endif %}
+{% endwith %}

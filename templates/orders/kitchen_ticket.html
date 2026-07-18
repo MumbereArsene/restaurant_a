@@ -1,0 +1,63 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Ticket cuisine" %} #{{ order.pk }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  @media print {
+    body { background: white !important; }
+    .staff-rail-hide, aside, .no-print { display: none !important; }
+    main, .min-w-0 { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="no-print mb-4 flex flex-wrap items-center justify-between gap-2">
+  <a href="{% url 'orders:staff_detail' pk=order.pk %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour" %}</a>
+  <button type="button" onclick="window.print()" class="btn-primary btn-sm">{% trans "Imprimer" %}</button>
+</div>
+
+<div class="mx-auto max-w-sm rounded-2xl border border-line bg-white p-6 print:border-0 print:p-0">
+  <p class="text-center text-[11px] font-bold uppercase tracking-[0.22em] text-ink-soft">{{ restaurant.name }}</p>
+  <h1 class="mt-1 text-center font-display text-2xl font-extrabold">{% trans "Ticket cuisine" %}</h1>
+  <div class="mt-4 flex items-end justify-between border-b border-dashed border-line pb-3">
+    <div>
+      <p class="font-display text-3xl font-extrabold">{% trans "Table" %} {{ order.table.number }}</p>
+      <p class="text-sm text-ink-soft">#{{ order.pk }} · {{ order.created_at|date:"H:i" }}</p>
+    </div>
+    <span class="{% if order.status == 'en_attente' %}badge-wait{% elif order.status == 'en_preparation' %}badge-prep{% elif order.status == 'prete' %}badge-ready{% else %}badge-done{% endif %}">
+      {{ order.get_status_display }}
+    </span>
+  </div>
+
+  <ul class="mt-4 space-y-3">
+    {% for item in order.items.all %}
+      <li class="flex items-start justify-between gap-3">
+        <div>
+          <p class="font-display text-lg font-bold">{{ item.quantity }}× {{ item.dish.name_fr }}</p>
+          {% if item.note %}<p class="text-sm text-ink-soft">{{ item.note }}</p>{% endif %}
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+
+  {% if order.note %}
+    <p class="mt-5 rounded-xl bg-surface px-3 py-2 text-sm">
+      <span class="font-bold">{% trans "Note :" %}</span> {{ order.note }}
+    </p>
+  {% endif %}
+
+  <p class="mt-6 text-center text-[10px] uppercase tracking-wider text-ink-soft">
+    {{ order.created_at|date:"d/m/Y H:i" }}
+  </p>
+</div>
+
+<script>
+  // Auto-open print dialog when opened with ?print=1
+  if (new URLSearchParams(location.search).get("print") === "1") {
+    window.addEventListener("load", () => setTimeout(() => window.print(), 200));
+  }
+</script>
+{% endblock %}

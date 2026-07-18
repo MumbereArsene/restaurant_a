@@ -1,0 +1,78 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Menu" %}</h1>
+  <div class="flex gap-2">
+    <a href="{% url 'menu:category_create' %}" class="btn-ghost btn-sm">+ {% trans "Catégorie" %}</a>
+    <a href="{% url 'menu:dish_create' %}" class="btn-primary btn-sm">+ {% trans "Plat" %}</a>
+  </div>
+</div>
+
+{% for category in categories %}
+  <section class="mb-10">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h2 class="font-display text-xl font-bold">
+        {{ category.name_fr }}
+        {% if not category.is_active %}<span class="badge-cancel ml-2">{% trans "Inactive" %}</span>{% endif %}
+      </h2>
+      <div class="flex gap-2">
+        <a href="{% url 'menu:category_update' pk=category.pk %}" class="btn-ghost btn-sm">{% trans "Modifier" %}</a>
+        <a href="{% url 'menu:category_delete' pk=category.pk %}" class="btn-danger btn-sm">{% trans "Supprimer" %}</a>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>{% trans "Plat" %}</th>
+            <th>{% trans "Prix" %}</th>
+            <th>{% trans "Dispo" %}</th>
+            <th>{% trans "Actions" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for dish in category.dishes.all %}
+            <tr>
+              <td>
+                <div class="flex items-center gap-3">
+                  {% if dish.photo_url %}
+                    <img src="{{ dish.photo_url }}" alt="" class="h-10 w-10 shrink-0 rounded-lg object-cover">
+                  {% else %}
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-paper text-xs text-ink-soft">—</span>
+                  {% endif %}
+                  <span>
+                    {{ dish.name_fr }}
+                    {% if dish.name_en %}<span class="text-ink-soft"> / {{ dish.name_en }}</span>{% endif %}
+                  </span>
+                </div>
+              </td>
+              <td class="tabular-nums">{{ dish.price }} {{ CURRENCY }}</td>
+              <td>
+                {% if dish.is_active %}<span class="badge-free">{% trans "Oui" %}</span>{% else %}<span class="badge-cancel">{% trans "Non" %}</span>{% endif %}
+              </td>
+              <td>
+                <div class="flex flex-wrap gap-1.5">
+                  <form method="post" action="{% url 'menu:dish_toggle' pk=dish.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-ghost btn-sm">
+                      {% if dish.is_active %}{% trans "Désactiver" %}{% else %}{% trans "Activer" %}{% endif %}
+                    </button>
+                  </form>
+                  <a href="{% url 'menu:dish_update' pk=dish.pk %}" class="btn-ghost btn-sm">{% trans "Modifier" %}</a>
+                  <a href="{% url 'menu:dish_delete' pk=dish.pk %}" class="btn-danger btn-sm">{% trans "Supprimer" %}</a>
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="text-ink-soft">{% trans "Aucun plat." %}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% empty %}
+  <p class="text-ink-soft">{% trans "Aucune catégorie. Commencez par en créer une." %}</p>
+{% endfor %}
+{% endblock %}

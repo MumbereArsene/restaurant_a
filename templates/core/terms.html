@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Politique d'utilisation" %} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden bg-ink text-white">
+  <div class="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-vermilion/25 blur-3xl"></div>
+  <div class="relative mx-auto max-w-3xl px-5 py-12 md:px-8 md:py-16">
+    <p class="text-[11px] font-bold uppercase tracking-[0.28em] text-vermilion">{% trans "Légal" %}</p>
+    <h1 class="mt-2 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
+      {% trans "Politique d'utilisation" %}
+    </h1>
+    <p class="mt-4 text-white/65">
+      {% trans "Règles d’usage du site, des commandes et du traitement de vos données." %}
+    </p>
+  </div>
+</section>
+
+<article class="prose-legal mx-auto max-w-3xl px-5 py-10 md:px-8 md:py-14">
+  <h2>{% trans "1. Acceptation" %}</h2>
+  <p>
+    {% blocktrans with name=restaurant.name %}
+    En utilisant le site de {{ name }}, vous acceptez la présente politique d’utilisation. Si vous n’êtes pas d’accord, veuillez ne pas utiliser les services en ligne.
+    {% endblocktrans %}
+  </p>
+
+  <h2>{% trans "2. Utilisation du service" %}</h2>
+  <ul>
+    <li>{% trans "Le menu et les prix affichés peuvent évoluer ; le montant final est celui confirmé au restaurant." %}</li>
+    <li>{% trans "La commande via QR code est réservée aux clients présents à table." %}</li>
+    <li>{% trans "Les réservations sont soumises à confirmation par l’équipe." %}</li>
+    <li>{% trans "Le paiement s’effectue en espèces auprès du personnel, sauf indication contraire affichée sur place." %}</li>
+  </ul>
+
+  <h2>{% trans "3. Comportements interdits" %}</h2>
+  <p>{% trans "Il est interdit de :" %}</p>
+  <ul>
+    <li>{% trans "Utiliser le site de manière frauduleuse ou pour nuire au restaurant ou à d’autres utilisateurs" %}</li>
+    <li>{% trans "Tenter d’accéder aux espaces personnel (staff) sans autorisation" %}</li>
+    <li>{% trans "Soumettre des contenus illicites, abusifs ou trompeurs via les formulaires" %}</li>
+    <li>{% trans "Automatiser massivement les requêtes (scraping abusif, attaques)" %}</li>
+  </ul>
+
+  <h2>{% trans "4. Données personnelles" %}</h2>
+  <h3>{% trans "Données collectées" %}</h3>
+  <p>
+    {% trans "Selon les formulaires utilisés : nom, téléphone, email, date/heure de réservation, message de contact, et contenu de commande lié à une table." %}
+  </p>
+  <h3>{% trans "Finalités" %}</h3>
+  <ul>
+    <li>{% trans "Traiter réservations, commandes et messages" %}</li>
+    <li>{% trans "Assurer le suivi opérationnel en salle et en cuisine" %}</li>
+    <li>{% trans "Améliorer le service (statistiques internes anonymisées autant que possible)" %}</li>
+  </ul>
+  <h3>{% trans "Conservation" %}</h3>
+  <p>
+    {% trans "Les données sont conservées le temps nécessaire au traitement de votre demande et aux obligations légales ou comptables applicables." %}
+  </p>
+  <h3>{% trans "Vos droits" %}</h3>
+  <p>
+    {% trans "Vous pouvez demander l’accès, la rectification ou la suppression de vos données en nous contactant via la" %}
+    <a href="{% url 'core:contact' %}">{% trans "page contact" %}</a>
+    {% if restaurant.email %}
+      {% trans "ou à" %} <a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a>
+    {% endif %}.
+  </p>
+
+  <h2>{% trans "5. Cookies et session" %}</h2>
+  <p>
+    {% trans "Le site utilise des cookies / sessions techniques indispensables (langue, panier, authentification personnel). Aucune publicité tierce n’est intégrée par défaut." %}
+  </p>
+
+  <h2>{% trans "6. Disponibilité" %}</h2>
+  <p>
+    {% trans "Nous nous efforçons d’assurer un accès continu au site, sans garantie d’absence d’interruption. En cas de panne, le service en salle reste possible auprès du personnel." %}
+  </p>
+
+  <h2>{% trans "7. Modifications" %}</h2>
+  <p>
+    {% trans "Cette politique peut être mise à jour. La date de révision figurant en bas de page fait foi. L’usage continu du site après modification vaut acceptation des nouvelles conditions." %}
+  </p>
+
+  <h2>{% trans "8. Mentions légales" %}</h2>
+  <p>
+    {% trans "Pour l’identité de l’éditeur et les informations légales, voir les" %}
+    <a href="{% url 'core:legal' %}">{% trans "mentions légales" %}</a>.
+  </p>
+
+  <p class="mt-10 text-xs text-ink-soft">
+    {% now "d/m/Y" as today %}
+    {% blocktrans %}Dernière mise à jour : {{ today }}{% endblocktrans %}
+  </p>
+</article>
+{% endblock %}

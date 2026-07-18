@@ -1,0 +1,94 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ restaurant.name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% if restaurant %}
+  <style>:root { {{ restaurant.theme_css }} }</style>
+  {% endif %}
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script>
+    document.addEventListener("htmx:configRequest", (e) => {
+      const csrf = document.querySelector("[name=csrfmiddlewaretoken]");
+      if (csrf) e.detail.headers["X-CSRFToken"] = csrf.value;
+    });
+  </script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen {% block body_class %}{% endblock %}" style="{% if restaurant %}{{ restaurant.theme_css }}{% endif %}">
+  {% block header %}
+    {% include "partials/site_nav.html" %}
+  {% endblock %}
+
+  {% if messages %}
+    <div class="mx-auto max-w-6xl px-5 pt-4 md:px-8">
+      {% for message in messages %}
+        <div class="mb-2 rounded-xl border px-4 py-3 text-sm
+          {% if message.tags == 'error' %}border-danger/30 bg-red-50 text-danger{% else %}border-ok/30 bg-lime-50 text-ok{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block footer %}
+  <footer class="mt-16 border-t border-line bg-ink text-white md:mt-24">
+    <div class="mx-auto grid max-w-6xl gap-10 px-5 py-12 sm:grid-cols-2 md:grid-cols-4 md:px-8 md:py-16">
+      <div class="sm:col-span-2 md:col-span-1">
+        <p class="font-display text-2xl font-extrabold tracking-tight">
+          <span class="text-vermilion">●</span> {{ restaurant.name }}
+        </p>
+        {% if restaurant.address %}
+          <p class="mt-3 max-w-xs text-sm leading-relaxed text-white/55">{{ restaurant.address }}</p>
+        {% endif %}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">{% trans "Explorer" %}</p>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li><a class="text-white/70 transition hover:text-vermilion" href="{% url 'menu:public' %}">{% trans "Menu" %}</a></li>
+          <li><a class="text-white/70 transition hover:text-vermilion" href="{% url 'reservations:create' %}">{% trans "Réserver" %}</a></li>
+          <li><a class="text-white/70 transition hover:text-vermilion" href="{% url 'core:contact' %}">{% trans "Contact" %}</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">{% trans "Contact" %}</p>
+        {% if restaurant.phone %}
+          <p class="mt-3 text-sm"><a class="transition hover:text-vermilion" href="tel:{{ restaurant.phone }}">{{ restaurant.phone }}</a></p>
+        {% endif %}
+        {% if restaurant.email %}<p class="mt-1 text-sm text-white/55">{{ restaurant.email }}</p>{% endif %}
+      </div>
+      <div>
+        <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">{% trans "Légal" %}</p>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li><a class="text-white/70 transition hover:text-vermilion" href="{% url 'core:legal' %}">{% trans "Mentions légales" %}</a></li>
+          <li><a class="text-white/70 transition hover:text-vermilion" href="{% url 'core:terms' %}">{% trans "Politique d'utilisation" %}</a></li>
+        </ul>
+        {% if restaurant.opening_hours %}
+          <p class="mt-5 text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">{% trans "Horaires" %}</p>
+          <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-white/55">{{ restaurant.opening_hours }}</p>
+        {% endif %}
+      </div>
+    </div>
+    <div class="border-t border-white/10">
+      <div class="mx-auto flex max-w-6xl flex-col gap-2 px-5 py-5 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between md:px-8">
+        <p>© {% now "Y" %} {{ restaurant.name }}</p>
+        <p>{% trans "Paiement en espèces sur place." %}</p>
+      </div>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <script src="{% static 'js/site-nav.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

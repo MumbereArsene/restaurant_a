@@ -1,0 +1,6 @@
+{% load i18n cart_tags %}
+{% if dish %}
+  {% include "orders/partials/dish_qty.html" with dish=dish cart=cart oob=True qty_prefix="qty" %}
+  {% include "orders/partials/dish_qty.html" with dish=dish cart=cart oob=True qty_prefix="qty-modal" %}
+{% endif %}
+{% include "orders/partials/cart_bar.html" with cart=cart oob=True %}

@@ -1,0 +1,18 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mx-auto max-w-md">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Supprimer la réservation" %}</h1>
+  <p class="mt-3 text-ink-soft">
+    {% blocktrans with name=reservation.name date=reservation.date %}
+      Confirmer la suppression de la réservation de {{ name }} ({{ date }}) ?
+    {% endblocktrans %}
+  </p>
+  <form method="post" class="mt-6 flex flex-wrap gap-2">
+    {% csrf_token %}
+    <button type="submit" class="btn-danger">{% trans "Oui, supprimer" %}</button>
+    <a href="{% url 'reservations:staff_list' %}" class="btn-ghost">{% trans "Annuler" %}</a>
+  </form>
+</div>
+{% endblock %}

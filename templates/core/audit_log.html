@@ -1,0 +1,36 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Journal d'audit" %} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="font-display text-3xl font-extrabold tracking-tight">{% trans "Journal d'audit" %}</h1>
+  <p class="mt-1 text-sm text-ink-soft">{% trans "Historique des actions importantes du personnel." %}</p>
+</div>
+
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{% trans "Date" %}</th>
+        <th>{% trans "Acteur" %}</th>
+        <th>{% trans "Action" %}</th>
+        <th>{% trans "Détail" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+        <tr>
+          <td class="whitespace-nowrap">{{ log.created_at|date:"d/m/Y H:i:s" }}</td>
+          <td>{{ log.actor|default:"—" }}</td>
+          <td><code class="rounded bg-surface px-1.5 py-0.5 text-xs">{{ log.action }}</code></td>
+          <td>{{ log.message }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="4" class="text-ink-soft">{% trans "Aucune entrée." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

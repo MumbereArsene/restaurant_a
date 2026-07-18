@@ -1,0 +1,336 @@
+@import "tailwindcss";
+
+@source "../../templates/**/*.html";
+@source "../../**/*.py";
+
+@theme {
+  --font-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand base: noir + orange */
+  --color-ink: #0a0a0a;
+  --color-ink-soft: #71717a;
+  --color-paper: #f4f4f5;
+  --color-paper-deep: #e4e4e7;
+  --color-surface: #ffffff;
+  --color-vermilion: #ff5a00;
+  --color-vermilion-dark: #e04e00;
+  --color-line: #e4e4e7;
+  --color-staff-rail: #0a0a0a;
+  --color-ok: #16a34a;
+  --color-warn: #ca8a04;
+  --color-danger: #dc2626;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-paper font-sans text-ink antialiased;
+  }
+
+  ::selection {
+    @apply bg-vermilion text-ink;
+  }
+}
+
+@layer components {
+  /* Primary CTA: orange punch + black type (food-app pro) */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-vermilion px-5 py-2.5
+      text-[15px] font-bold tracking-tight text-ink shadow-[0_8px_24px_-8px_rgba(255,90,0,0.55)]
+      transition duration-200 hover:bg-vermilion-dark hover:shadow-[0_10px_28px_-8px_rgba(255,90,0,0.65)]
+      active:scale-[0.98]
+      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+      focus-visible:outline-vermilion;
+  }
+
+  .btn-ink {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink px-5 py-2.5
+      text-[15px] font-bold tracking-tight text-white transition duration-200
+      hover:bg-zinc-800 active:scale-[0.98]
+      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+      focus-visible:outline-ink;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-current/20
+      bg-transparent px-5 py-2.5 text-[15px] font-semibold tracking-tight transition
+      duration-200 hover:bg-black/5 active:scale-[0.98];
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-danger px-5 py-2.5
+      text-[15px] font-bold tracking-tight text-white transition duration-200
+      hover:bg-danger/90 active:scale-[0.98];
+  }
+
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-line bg-white px-3.5 py-2.5
+      text-[15px] text-ink outline-none transition
+      focus:border-vermilion focus:ring-2 focus:ring-vermilion/25;
+  }
+
+  .label {
+    @apply mb-1.5 block text-sm font-semibold text-ink;
+  }
+
+  .badge-wait {
+    @apply inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-bold text-orange-800;
+  }
+  .badge-prep {
+    @apply inline-flex items-center rounded-full bg-zinc-900 px-2.5 py-0.5 text-xs font-bold text-vermilion;
+  }
+  .badge-ready {
+    @apply inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900;
+  }
+  .badge-done {
+    @apply inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-ok;
+  }
+  .badge-paid {
+    @apply inline-flex items-center rounded-full bg-ink px-2.5 py-0.5 text-xs font-bold text-white;
+  }
+  .badge-cancel {
+    @apply inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-danger;
+  }
+  .badge-free {
+    @apply inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-ok;
+  }
+  .badge-busy {
+    @apply inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-bold text-orange-800;
+  }
+  .badge-in {
+    @apply inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-ok;
+  }
+  .badge-out {
+    @apply inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-danger;
+  }
+
+  .data-table {
+    @apply w-full overflow-hidden rounded-2xl border border-line bg-white text-left text-sm;
+  }
+
+  .data-table thead {
+    @apply bg-ink text-white;
+  }
+
+  .data-table th {
+    @apply px-4 py-3.5 font-semibold tracking-tight;
+  }
+
+  .data-table td {
+    @apply border-t border-line px-4 py-3.5 align-middle;
+  }
+
+  .data-table tbody tr:hover {
+    @apply bg-orange-50/40;
+  }
+
+  .reveal {
+    animation: reveal-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .reveal-delay-1 {
+    animation-delay: 0.12s;
+  }
+  .reveal-delay-2 {
+    animation-delay: 0.24s;
+  }
+  .reveal-delay-3 {
+    animation-delay: 0.36s;
+  }
+
+  .ken-burns {
+    animation: ken-burns 18s ease-out infinite alternate;
+  }
+
+  .nav-underline {
+    @apply relative;
+  }
+
+  .nav-underline::after {
+    content: "";
+    @apply absolute -bottom-0.5 left-0 h-0.5 w-0 bg-vermilion transition-all duration-300 ease-out;
+  }
+
+  .nav-underline:hover::after {
+    @apply w-full;
+  }
+
+  .chip {
+    @apply shrink-0 rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-bold
+      text-ink transition hover:border-ink hover:bg-ink hover:text-white;
+  }
+
+  .chip-active {
+    @apply border-vermilion bg-vermilion text-ink;
+  }
+
+  /* —— Hamburger —— */
+  .hamburger {
+    @apply relative z-50 flex h-11 w-11 items-center justify-center rounded-full
+      border border-line bg-white text-ink transition active:scale-95;
+  }
+
+  .hamburger--light {
+    @apply border-white/25 bg-white/10 text-white backdrop-blur-sm;
+  }
+
+  .hamburger-box {
+    @apply relative block h-3.5 w-5;
+  }
+
+  .hamburger-inner,
+  .hamburger-inner::before,
+  .hamburger-inner::after {
+    @apply absolute left-0 block h-0.5 w-5 rounded-full bg-current transition duration-300;
+  }
+
+  .hamburger-inner {
+    top: 50%;
+    margin-top: -1px;
+  }
+
+  .hamburger-inner::before,
+  .hamburger-inner::after {
+    content: "";
+  }
+
+  .hamburger-inner::before {
+    top: -6px;
+  }
+
+  .hamburger-inner::after {
+    top: 6px;
+  }
+
+  .hamburger.is-active .hamburger-inner {
+    background-color: transparent;
+  }
+
+  .hamburger.is-active .hamburger-inner::before {
+    top: 0;
+    transform: rotate(45deg);
+  }
+
+  .hamburger.is-active .hamburger-inner::after {
+    top: 0;
+    transform: rotate(-45deg);
+  }
+
+  /* —— Mobile drawer —— */
+  .mobile-nav {
+    @apply fixed inset-0 z-[60];
+  }
+
+  .mobile-nav[hidden] {
+    display: none !important;
+  }
+
+  .mobile-nav__backdrop {
+    @apply absolute inset-0 bg-ink/60 backdrop-blur-sm;
+    animation: nav-fade 0.25s ease both;
+  }
+
+  .mobile-nav__panel {
+    @apply absolute inset-y-0 right-0 flex w-[min(100%,20rem)] flex-col bg-ink shadow-2xl;
+    animation: nav-slide 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .staff-mobile-panel {
+    @apply absolute inset-y-0 left-0 flex w-[min(100%,18.5rem)] flex-col bg-staff-rail text-white shadow-2xl;
+    animation: staff-nav-slide 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .mobile-nav__link {
+    @apply rounded-xl px-4 py-3.5 transition hover:bg-white/10 hover:text-vermilion;
+  }
+
+  body.nav-open {
+    @apply overflow-hidden;
+  }
+
+  .prose-legal h2 {
+    @apply mt-10 font-display text-xl font-extrabold tracking-tight first:mt-0 md:text-2xl;
+  }
+
+  .prose-legal h3 {
+    @apply mt-6 text-base font-bold;
+  }
+
+  .prose-legal p,
+  .prose-legal li {
+    @apply text-sm leading-relaxed text-ink-soft md:text-[15px];
+  }
+
+  .prose-legal p {
+    @apply mt-3;
+  }
+
+  .prose-legal ul {
+    @apply mt-3 list-disc space-y-1.5 pl-5;
+  }
+
+  .prose-legal a {
+    @apply font-semibold text-vermilion underline-offset-2 hover:underline;
+  }
+}
+
+@keyframes nav-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes nav-slide {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes staff-nav-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ken-burns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

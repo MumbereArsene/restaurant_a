@@ -1,0 +1,20 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">{{ title }}</h1></div>
+<form method="post" class="max-w-md space-y-4 rounded-lg border border-line bg-white p-6">
+  {% csrf_token %}
+  {% for field in form %}
+    <div>
+      <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% if field.errors %}<p class="mt-1 text-sm text-danger">{{ field.errors|striptags }}</p>{% endif %}
+    </div>
+  {% endfor %}
+  <div class="flex gap-2 pt-2">
+    <button type="submit" class="btn-primary">{% trans "Enregistrer" %}</button>
+    <a href="{% url 'tables:list' %}" class="btn-ghost">{% trans "Annuler" %}</a>
+  </div>
+</form>
+{% endblock %}

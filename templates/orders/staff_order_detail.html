@@ -1,0 +1,150 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Commande" %} #{{ order.pk }}</h1>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'orders:staff_ticket' pk=order.pk %}" class="btn-ghost btn-sm">{% trans "Ticket cuisine" %}</a>
+    <a href="{% url 'orders:staff_list' %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour" %}</a>
+  </div>
+</div>
+
+<div class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="rounded-lg border border-line bg-white p-4">
+    <p class="text-xs text-ink-soft">{% trans "Table" %}</p>
+    <p class="mt-1 font-display text-xl font-bold">{{ order.table }}</p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-4">
+    <p class="text-xs text-ink-soft">{% trans "Statut" %}</p>
+    <p class="mt-2">
+      {% if order.status == "en_attente" %}<span class="badge-wait"
+      {% elif order.status == "en_preparation" %}<span class="badge-prep"
+      {% elif order.status == "prete" %}<span class="badge-ready"
+      {% elif order.status == "servie" %}<span class="badge-done"
+      {% elif order.status == "payee" %}<span class="badge-paid"
+      {% else %}<span class="badge-cancel"
+      {% endif %}>{{ order.get_status_display }}</span>
+    </p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-4">
+    <p class="text-xs text-ink-soft">{% trans "Total" %}</p>
+    <p class="mt-1 font-display text-xl font-bold tabular-nums">{{ order.total }} {{ CURRENCY }}</p>
+    {% if order.discount_status == "approved" and order.discount_amount %}
+      <p class="mt-1 text-xs text-vermilion">−{{ order.discount_amount }} {% trans "remise" %}</p>
+    {% endif %}
+  </div>
+  <div class="rounded-lg border border-line bg-white p-4">
+    <p class="text-xs text-ink-soft">{{ order.created_at|date:"d/m/Y" }}</p>
+    <p class="mt-1 font-display text-xl font-bold">{{ order.created_at|date:"H:i" }}</p>
+  </div>
+</div>
+
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{% trans "Plat" %}</th>
+        <th>{% trans "Qté" %}</th>
+        <th>{% trans "Prix" %}</th>
+        <th>{% trans "Sous-total" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in order.items.all %}
+        <tr>
+          <td>{{ item.dish.name_fr }}</td>
+          <td>{{ item.quantity }}</td>
+          <td class="tabular-nums">{{ item.unit_price }} {{ CURRENCY }}</td>
+          <td class="tabular-nums font-medium">{{ item.subtotal }} {{ CURRENCY }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if order.note %}
+  <p class="mt-4 text-sm"><span class="font-semibold">{% trans "Note :" %}</span> {{ order.note }}</p>
+{% endif %}
+
+{# —— Remise —— #}
+{% if order.status != "payee" and order.status != "annulee" %}
+  <section class="mt-8 rounded-2xl border border-line bg-white p-5">
+    <h2 class="font-display text-lg font-bold">{% trans "Remise" %}</h2>
+
+    {% if order.discount_status == "pending" %}
+      <p class="mt-2 text-sm text-amber-800">
+        {% trans "Demande en attente :" %}
+        <strong class="tabular-nums">{{ order.discount_amount }} {{ CURRENCY }}</strong>
+        {% if order.discount_reason %} — {{ order.discount_reason }}{% endif %}
+      </p>
+      {% if user.can_approve_discount %}
+        <div class="mt-3 flex flex-wrap gap-2">
+          <form method="post" action="{% url 'orders:staff_discount_decide' pk=order.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="decision" value="approve">
+            <button type="submit" class="btn-primary btn-sm">{% trans "Approuver" %}</button>
+          </form>
+          <form method="post" action="{% url 'orders:staff_discount_decide' pk=order.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="decision" value="reject">
+            <button type="submit" class="btn-danger btn-sm">{% trans "Refuser" %}</button>
+          </form>
+        </div>
+      {% else %}
+        <p class="mt-1 text-xs text-ink-soft">{% trans "En attente de validation manager / admin." %}</p>
+      {% endif %}
+    {% elif user.can_encaisser or user.can_approve_discount %}
+      <form method="post" action="{% url 'orders:staff_discount' pk=order.pk %}" class="mt-3 grid gap-3 sm:grid-cols-[1fr_2fr_auto]">
+        {% csrf_token %}
+        <div>
+          <label class="label">{% trans "Montant" %}</label>
+          <input type="number" name="discount_amount" min="0" step="0.01" class="field"
+                 value="{% if order.discount_status == 'approved' %}{{ order.discount_amount }}{% endif %}"
+                 placeholder="0">
+        </div>
+        <div>
+          <label class="label">{% trans "Motif" %}</label>
+          <input type="text" name="discount_reason" class="field" maxlength="255"
+                 value="{{ order.discount_reason }}"
+                 placeholder="{% trans 'Ex : client fidèle' %}">
+        </div>
+        <div class="flex items-end">
+          <button type="submit" class="btn-ink btn-sm w-full sm:w-auto">
+            {% if user.can_approve_discount %}{% trans "Appliquer" %}{% else %}{% trans "Demander" %}{% endif %}
+          </button>
+        </div>
+      </form>
+      {% if not user.can_approve_discount %}
+        <p class="mt-2 text-xs text-ink-soft">{% trans "Les remises doivent être validées par un manager." %}</p>
+      {% endif %}
+    {% endif %}
+  </section>
+{% endif %}
+
+<div class="mt-8 flex flex-wrap gap-2">
+  {% if order.status == "en_attente" or order.status == "en_preparation" or order.status == "prete" %}
+    <form method="post" action="{% url 'orders:staff_advance' pk=order.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'orders:staff_detail' pk=order.pk %}">
+      <button type="submit" class="btn-primary">
+        {% if order.status == "en_attente" %}{% trans "Passer en préparation" %}
+        {% elif order.status == "en_preparation" %}{% trans "Marquer prête" %}
+        {% else %}{% trans "Marquer servie" %}{% endif %}
+      </button>
+    </form>
+  {% endif %}
+  {% if order.status != "payee" and order.status != "annulee" %}
+    {% if user.can_encaisser %}
+      <a href="{% url 'orders:staff_pay' pk=order.pk %}" class="btn-ink">
+        {% trans "Encaisser (espèces)" %}
+      </a>
+    {% endif %}
+    <form method="post" action="{% url 'orders:staff_cancel' pk=order.pk %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'orders:staff_detail' pk=order.pk %}">
+      <button type="submit" class="btn-danger">{% trans "Annuler" %}</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

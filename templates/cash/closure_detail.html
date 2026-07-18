@@ -1,0 +1,51 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Clôture" %} #{{ closure.pk }} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <div>
+    <a href="{% url 'cash:ledger' %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour caisse" %}</a>
+    <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight">{% trans "Clôture" %} #{{ closure.pk }}</h1>
+    <p class="mt-1 text-sm text-ink-soft">
+      {{ closure.closed_at|date:"d/m/Y H:i" }}
+      {% if closure.closed_by %} — {{ closure.closed_by }}{% endif %}
+    </p>
+  </div>
+  <button type="button" onclick="window.print()" class="btn-ghost btn-sm no-print">{% trans "Imprimer" %}</button>
+</div>
+
+<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+  <div class="rounded-2xl border border-line bg-white p-5">
+    <p class="text-xs text-ink-soft">{% trans "Début période" %}</p>
+    <p class="mt-1 font-semibold">{{ closure.period_start|date:"d/m/Y H:i" }}</p>
+  </div>
+  <div class="rounded-2xl border border-line bg-white p-5">
+    <p class="text-xs text-ink-soft">{% trans "Entrées" %}</p>
+    <p class="mt-1 font-display text-xl font-bold text-ok tabular-nums">+{{ closure.total_in }} {{ CURRENCY }}</p>
+  </div>
+  <div class="rounded-2xl border border-line bg-white p-5">
+    <p class="text-xs text-ink-soft">{% trans "Sorties" %}</p>
+    <p class="mt-1 font-display text-xl font-bold text-danger tabular-nums">−{{ closure.total_out }} {{ CURRENCY }}</p>
+  </div>
+  <div class="rounded-2xl border border-line bg-white p-5">
+    <p class="text-xs text-ink-soft">{% trans "Attendu" %}</p>
+    <p class="mt-1 font-display text-xl font-bold tabular-nums">{{ closure.expected_amount }} {{ CURRENCY }}</p>
+  </div>
+  <div class="rounded-2xl border border-line bg-white p-5">
+    <p class="text-xs text-ink-soft">{% trans "Compté" %}</p>
+    <p class="mt-1 font-display text-xl font-bold tabular-nums">{{ closure.counted_amount }} {{ CURRENCY }}</p>
+  </div>
+  <div class="rounded-2xl bg-ink p-5 text-white">
+    <p class="text-xs text-white/45">{% trans "Écart" %}</p>
+    <p class="mt-1 font-display text-xl font-extrabold tabular-nums {% if closure.difference %}text-vermilion{% else %}text-ok{% endif %}">
+      {{ closure.difference }} {{ CURRENCY }}
+    </p>
+  </div>
+</div>
+
+{% if closure.notes %}
+  <p class="mt-6 text-sm"><span class="font-semibold">{% trans "Notes :" %}</span> {{ closure.notes }}</p>
+{% endif %}
+{% endblock %}

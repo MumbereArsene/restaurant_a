@@ -1,0 +1,82 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0A0A">
+  <title>{% block title %}{% trans "Espace serveur" %} — {{ restaurant.name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% if restaurant %}
+  <style>:root { {{ restaurant.theme_css }} }</style>
+  {% endif %}
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-surface pb-24" style="{% if restaurant %}{{ restaurant.theme_css }}{% endif %}">
+  <header class="fixed inset-x-0 top-0 z-30 border-b border-white/10 bg-ink text-white">
+    <div class="mx-auto flex h-14 max-w-lg items-center justify-between px-4">
+      <div class="min-w-0">
+        <p class="truncate font-display text-base font-extrabold tracking-tight">
+          <span class="text-vermilion">●</span> {{ restaurant.name }}
+        </p>
+        <p class="text-[10px] font-bold uppercase tracking-[0.22em] text-vermilion">
+          {% trans "Espace serveur" %}
+        </p>
+      </div>
+      <div class="shrink-0 text-right">
+        <p class="text-sm font-semibold">{{ user.get_full_name|default:user.username }}</p>
+        <form action="{% url 'accounts:logout' %}" method="post" class="inline">
+          {% csrf_token %}
+          <button type="submit" class="text-[11px] font-medium text-white/50 underline-offset-2 hover:text-white hover:underline">
+            {% trans "Déconnexion" %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-lg px-4 pb-5 pt-20">
+    {% if messages %}
+      <div class="mb-4 space-y-2">
+        {% for message in messages %}
+          <div class="rounded-xl border px-4 py-2.5 text-sm font-medium
+            {% if message.tags == 'error' %}border-danger/30 bg-red-50 text-danger{% else %}border-ok/30 bg-lime-50 text-ok{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink pb-[env(safe-area-inset-bottom)]">
+    <div class="mx-auto flex max-w-lg items-stretch">
+      {% with view=request.resolver_match.view_name %}
+      <a href="{% url 'tables:serveur_home' %}"
+         class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider transition
+           {% if view == 'tables:serveur_home' or view == 'tables:free_scan' or view == 'tables:free_confirm' %}text-vermilion{% else %}text-white/45 hover:text-white{% endif %}">
+        <span class="font-display text-lg leading-none">◎</span>
+        {% trans "Libérer" %}
+      </a>
+      <a href="{% url 'orders:staff_list' %}"
+         class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider transition
+           {% if view == 'orders:staff_list' %}text-vermilion{% else %}text-white/45 hover:text-white{% endif %}">
+        <span class="font-display text-lg leading-none">☰</span>
+        {% trans "Commandes" %}
+      </a>
+      {% if user.is_admin_role %}
+        <a href="{% url 'core:dashboard' %}"
+           class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white/45 transition hover:text-white">
+          <span class="font-display text-lg leading-none">←</span>
+          {% trans "Admin" %}
+        </a>
+      {% endif %}
+      {% endwith %}
+    </div>
+  </nav>
+</body>
+</html>

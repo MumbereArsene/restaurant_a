@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Mentions légales" %} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden bg-ink text-white">
+  <div class="pointer-events-none absolute -right-16 top-0 h-56 w-56 rounded-full bg-vermilion/25 blur-3xl"></div>
+  <div class="relative mx-auto max-w-3xl px-5 py-12 md:px-8 md:py-16">
+    <p class="text-[11px] font-bold uppercase tracking-[0.28em] text-vermilion">{% trans "Légal" %}</p>
+    <h1 class="mt-2 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
+      {% trans "Mentions légales" %}
+    </h1>
+    <p class="mt-4 text-white/65">
+      {% trans "Informations sur l’éditeur du site et les conditions d’accès." %}
+    </p>
+  </div>
+</section>
+
+<article class="prose-legal mx-auto max-w-3xl px-5 py-10 md:px-8 md:py-14">
+  <h2>{% trans "1. Éditeur du site" %}</h2>
+  <p>
+    {% blocktrans with name=restaurant.name %}Le présent site est édité par <strong>{{ name }}</strong>.{% endblocktrans %}
+  </p>
+  <ul>
+    {% if restaurant.address %}<li><strong>{% trans "Adresse" %} :</strong> {{ restaurant.address }}</li>{% endif %}
+    {% if restaurant.phone %}<li><strong>{% trans "Téléphone" %} :</strong> <a href="tel:{{ restaurant.phone }}">{{ restaurant.phone }}</a></li>{% endif %}
+    {% if restaurant.email %}<li><strong>{% trans "Email" %} :</strong> <a href="mailto:{{ restaurant.email }}">{{ restaurant.email }}</a></li>{% endif %}
+  </ul>
+
+  <h2>{% trans "2. Hébergement" %}</h2>
+  <p>
+    {% trans "Le site est hébergé sur l’infrastructure choisie par l’établissement. Pour toute question technique relative à l’hébergement, contactez le restaurant aux coordonnées ci-dessus." %}
+  </p>
+
+  <h2>{% trans "3. Objet du site" %}</h2>
+  <p>
+    {% trans "Ce site permet de consulter le menu, passer commande depuis une table via QR code, demander une réservation et contacter le restaurant. Le paiement des commandes s’effectue en espèces sur place." %}
+  </p>
+
+  <h2>{% trans "4. Propriété intellectuelle" %}</h2>
+  <p>
+    {% blocktrans with name=restaurant.name %}
+    Les textes, photos, logos et éléments graphiques présents sur ce site sont la propriété de {{ name }} ou de leurs auteurs respectifs. Toute reproduction non autorisée est interdite.
+    {% endblocktrans %}
+  </p>
+
+  <h2>{% trans "5. Responsabilité" %}</h2>
+  <p>
+    {% trans "Les informations affichées (menu, prix, horaires, disponibilité des tables) sont fournies à titre indicatif et peuvent être modifiées à tout moment. Le restaurant ne saurait être tenu responsable d’une indisponibilité temporaire du service en ligne." %}
+  </p>
+
+  <h2>{% trans "6. Données personnelles" %}</h2>
+  <p>
+    {% trans "Les données collectées via les formulaires (réservation, contact) sont utilisées uniquement pour traiter votre demande. Pour en savoir plus, consultez notre" %}
+    <a href="{% url 'core:terms' %}">{% trans "politique d’utilisation" %}</a>.
+  </p>
+
+  <h2>{% trans "7. Contact" %}</h2>
+  <p>
+    {% trans "Pour toute question relative aux présentes mentions, écrivez-nous via la" %}
+    <a href="{% url 'core:contact' %}">{% trans "page contact" %}</a>.
+  </p>
+
+  <p class="mt-10 text-xs text-ink-soft">
+    {% now "d/m/Y" as today %}
+    {% blocktrans %}Dernière mise à jour : {{ today }}{% endblocktrans %}
+  </p>
+</article>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6"><h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Supprimer" %} « {{ user_obj.username }} »</h1></div>
+<p class="text-ink-soft">{% trans "Cette action est définitive." %}</p>
+<form method="post" class="mt-6 flex gap-2">
+  {% csrf_token %}
+  <button type="submit" class="btn-danger">{% trans "Oui, supprimer" %}</button>
+  <a href="{% url 'accounts:personnel_list' %}" class="btn-ghost">{% trans "Annuler" %}</a>
+</form>
+{% endblock %}

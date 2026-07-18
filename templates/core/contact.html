@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Contact" %} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<section class="relative overflow-hidden bg-ink text-white">
+  <div class="pointer-events-none absolute -left-16 bottom-0 h-56 w-56 rounded-full bg-vermilion/25 blur-3xl"></div>
+  <div class="relative mx-auto max-w-6xl px-5 py-12 md:px-8 md:py-16">
+    <p class="text-[11px] font-bold uppercase tracking-[0.28em] text-vermilion">{% trans "Contact" %}</p>
+    <h1 class="mt-2 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
+      {% trans "Parlons-nous" %}
+    </h1>
+    <p class="mt-4 max-w-lg text-white/65">
+      {% trans "Une question, un événement privé, un feedback ? Écrivez-nous — on répond vite." %}
+    </p>
+  </div>
+</section>
+
+<section class="mx-auto max-w-6xl px-5 py-10 md:px-8 md:py-14">
+  <div class="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+    {# —— Coordonnées —— #}
+    <div class="space-y-4">
+      {% if restaurant.phone %}
+        <a href="tel:{{ restaurant.phone }}"
+           class="group flex items-start gap-4 rounded-2xl border border-line bg-white p-5 transition hover:border-vermilion/40 hover:shadow-md">
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-extrabold text-vermilion">Tél</span>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">{% trans "Téléphone" %}</p>
+            <p class="mt-1 font-display text-xl font-extrabold group-hover:text-vermilion">{{ restaurant.phone }}</p>
+          </div>
+        </a>
+      {% endif %}
+
+      {% if restaurant.email %}
+        <a href="mailto:{{ restaurant.email }}"
+           class="group flex items-start gap-4 rounded-2xl border border-line bg-white p-5 transition hover:border-vermilion/40 hover:shadow-md">
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-extrabold text-vermilion">@</span>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">{% trans "Email" %}</p>
+            <p class="mt-1 break-all font-semibold group-hover:text-vermilion">{{ restaurant.email }}</p>
+          </div>
+        </a>
+      {% endif %}
+
+      {% if restaurant.address %}
+        <div class="flex items-start gap-4 rounded-2xl border border-line bg-white p-5">
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink text-sm font-extrabold text-vermilion">Adr</span>
+          <div>
+            <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">{% trans "Adresse" %}</p>
+            <p class="mt-1 font-semibold leading-relaxed">{{ restaurant.address }}</p>
+          </div>
+        </div>
+      {% endif %}
+
+      {% if restaurant.opening_hours %}
+        <div class="rounded-2xl bg-ink p-5 text-white">
+          <p class="text-[10px] font-bold uppercase tracking-[0.2em] text-vermilion">{% trans "Horaires" %}</p>
+          <p class="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/75">{{ restaurant.opening_hours }}</p>
+        </div>
+      {% endif %}
+
+      <a href="{% url 'reservations:create' %}" class="btn-primary inline-flex w-full justify-center sm:w-auto">
+        {% trans "Réserver une table" %}
+      </a>
+    </div>
+
+    {# —— Formulaire —— #}
+    <form method="post" class="rounded-2xl border border-line bg-white p-6 shadow-[0_20px_50px_-30px_rgba(0,0,0,0.25)] md:p-8">
+      {% csrf_token %}
+      <h2 class="font-display text-xl font-extrabold">{% trans "Envoyer un message" %}</h2>
+      <p class="mt-1 text-sm text-ink-soft">{% trans "Nous lisons chaque message avec attention." %}</p>
+
+      <div class="mt-6 grid gap-4 sm:grid-cols-2">
+        <div class="sm:col-span-2">
+          <label class="label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% if form.name.errors %}<p class="mt-1 text-sm text-danger">{{ form.name.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% if form.email.errors %}<p class="mt-1 text-sm text-danger">{{ form.email.errors|striptags }}</p>{% endif %}
+        </div>
+        <div>
+          <label class="label" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+          {{ form.phone }}
+          {% if form.phone.errors %}<p class="mt-1 text-sm text-danger">{{ form.phone.errors|striptags }}</p>{% endif %}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label" for="{{ form.subject.id_for_label }}">{{ form.subject.label }}</label>
+          {{ form.subject }}
+          {% if form.subject.errors %}<p class="mt-1 text-sm text-danger">{{ form.subject.errors|striptags }}</p>{% endif %}
+        </div>
+        <div class="sm:col-span-2">
+          <label class="label" for="{{ form.message.id_for_label }}">{{ form.message.label }}</label>
+          {{ form.message }}
+          {% if form.message.errors %}<p class="mt-1 text-sm text-danger">{{ form.message.errors|striptags }}</p>{% endif %}
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary mt-6 w-full py-3.5 text-base">
+        {% trans "Envoyer" %}
+      </button>
+    </form>
+  </div>
+</section>
+{% endblock %}

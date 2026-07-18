@@ -1,0 +1,31 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3 no-print">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "QR — Table" %} {{ table.number }}</h1>
+  <a href="{% url 'tables:list' %}" class="text-sm text-ink-soft hover:text-ink">← {% trans "Retour" %}</a>
+</div>
+
+<div class="mx-auto max-w-sm rounded-lg border border-line bg-white p-8 text-center">
+  <p class="font-display text-xl font-bold">{{ restaurant.name }}</p>
+  <p class="mt-1 font-display text-2xl font-extrabold text-vermilion">
+    {% blocktrans with n=table.number %}Table {{ n }}{% endblocktrans %}
+  </p>
+  <img src="{% url 'tables:qr_png' pk=table.pk %}" alt="QR Table {{ table.number }}" class="mx-auto mt-6 h-56 w-56">
+  <p class="mt-4 text-sm font-medium">{% trans "À scanner au moment de commander" %}</p>
+  <p class="mt-2 break-all text-[11px] text-ink-soft">{{ order_url }}</p>
+</div>
+
+<div class="mt-6 flex flex-wrap gap-2 no-print">
+  <button onclick="window.print()" class="btn-primary">{% trans "Imprimer" %}</button>
+  <a href="{% url 'tables:qr_png' pk=table.pk %}?download=1" class="btn-ink">{% trans "Télécharger PNG" %}</a>
+  {% if user.is_admin_role %}
+    <form method="post" action="{% url 'tables:qr_regen' pk=table.pk %}"
+          onsubmit="return confirm('{% trans "Régénérer ? L’ancien QR imprimé ne fonctionnera plus." %}');">
+      {% csrf_token %}
+      <button type="submit" class="btn-danger">{% trans "Régénérer le token" %}</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

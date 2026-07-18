@@ -1,0 +1,61 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Tables" %}</h1>
+  <div class="flex flex-wrap gap-2">
+    {% if user.can_free_tables %}
+      <a href="{% url 'tables:serveur_home' %}" class="btn-primary btn-sm">{% trans "Espace serveur" %}</a>
+    {% endif %}
+    {% if user.is_admin_role %}
+      <a href="{% url 'tables:create' %}" class="btn-ink btn-sm">+ {% trans "Nouvelle table" %}</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{% trans "N°" %}</th>
+        <th>{% trans "Capacité" %}</th>
+        <th>{% trans "Statut" %}</th>
+        <th>{% trans "QR" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for table in tables %}
+        <tr>
+          <td class="font-display text-lg font-bold">{{ table.number }}</td>
+          <td>{{ table.capacity }} {% trans "pers." %}</td>
+          <td>
+            {% if table.status == "libre" %}<span class="badge-free">{% else %}<span class="badge-busy">{% endif %}{{ table.get_status_display }}</span>
+          </td>
+          <td><a class="font-semibold text-vermilion hover:underline" href="{% url 'tables:qr_view' pk=table.pk %}">{% trans "Voir / imprimer" %}</a></td>
+          <td>
+            <div class="flex flex-wrap gap-2">
+              {% if table.status == "occupee" %}
+                {% if user.can_free_tables %}
+                  <form method="post" action="{% url 'tables:free_by_pk' pk=table.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'tables:serveur_home' %}">
+                    <button type="submit" class="btn-primary btn-sm">{% trans "Libérer" %}</button>
+                  </form>
+                {% endif %}
+              {% endif %}
+              {% if user.is_admin_role %}
+                <a href="{% url 'tables:update' pk=table.pk %}" class="btn-ghost btn-sm">{% trans "Modifier" %}</a>
+                <a href="{% url 'tables:delete' pk=table.pk %}" class="btn-danger btn-sm">{% trans "Supprimer" %}</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-ink-soft">{% trans "Aucune table. Créez la première." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Réservations" %}</h1>
+  <a href="{% url 'reservations:staff_create' %}" class="btn-primary btn-sm">+ {% trans "Nouvelle" %}</a>
+</div>
+
+<div class="mb-5 flex flex-wrap gap-2">
+  <a href="{% url 'reservations:staff_list' %}"
+     class="rounded-md px-3 py-1.5 text-sm font-medium {% if not current_status %}bg-ink text-white{% else %}border border-line bg-white{% endif %}">
+    {% trans "Toutes" %}
+  </a>
+  {% for value, label in statuses %}
+    <a href="?status={{ value }}"
+       class="rounded-md px-3 py-1.5 text-sm font-medium {% if current_status == value %}bg-ink text-white{% else %}border border-line bg-white{% endif %}">
+      {{ label }}
+    </a>
+  {% endfor %}
+</div>
+
+<div class="overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>{% trans "Nom" %}</th>
+        <th>{% trans "Tél." %}</th>
+        <th>{% trans "Date" %}</th>
+        <th>{% trans "Heure" %}</th>
+        <th>{% trans "Pers." %}</th>
+        <th>{% trans "Statut" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in reservations %}
+        <tr>
+          <td>
+            <span class="font-medium">{{ r.name }}</span>
+            {% if r.notes %}<span class="ml-1 text-xs text-ink-soft" title="{{ r.notes }}">· note</span>{% endif %}
+          </td>
+          <td>{{ r.phone }}</td>
+          <td>{{ r.date|date:"d/m/Y" }}</td>
+          <td>{{ r.time|time:"H:i" }}</td>
+          <td>{{ r.guests }}</td>
+          <td>
+            {% if r.status == "en_attente" %}<span class="badge-wait">{% elif r.status == "confirmee" %}<span class="badge-done">{% else %}<span class="badge-cancel">{% endif %}{{ r.get_status_display }}</span>
+          </td>
+          <td>
+            <div class="flex flex-wrap gap-1.5">
+              <a href="{% url 'reservations:staff_update' pk=r.pk %}" class="btn-ghost btn-sm">{% trans "Modifier" %}</a>
+              {% if r.status == "en_attente" %}
+                <form method="post" action="{% url 'reservations:staff_set_status' pk=r.pk status='confirmee' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-primary btn-sm">{% trans "Confirmer" %}</button>
+                </form>
+                <form method="post" action="{% url 'reservations:staff_set_status' pk=r.pk status='refusee' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-danger btn-sm">{% trans "Refuser" %}</button>
+                </form>
+              {% elif r.status == "confirmee" %}
+                <form method="post" action="{% url 'reservations:staff_set_status' pk=r.pk status='annulee' %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-ghost btn-sm">{% trans "Annuler" %}</button>
+                </form>
+              {% endif %}
+              <a href="{% url 'reservations:staff_delete' pk=r.pk %}" class="btn-danger btn-sm">{% trans "Supprimer" %}</a>
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-ink-soft">{% trans "Aucune réservation." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

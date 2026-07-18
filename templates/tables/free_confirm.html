@@ -1,0 +1,44 @@
+{% extends "serveur_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Libérer" %} — {% trans "Table" %} {{ table.number }}{% endblock %}
+
+{% block content %}
+<div class="text-center">
+  <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-vermilion">{% trans "Scan serveur" %}</p>
+  <h1 class="mt-2 font-display text-4xl font-extrabold">
+    {% blocktrans with n=table.number %}Table {{ n }}{% endblocktrans %}
+  </h1>
+  <p class="mt-3 text-sm text-ink-soft">
+    {% if table.status == "occupee" %}
+      {% trans "Cette table est occupée. Confirmez pour la libérer." %}
+    {% else %}
+      {% trans "Cette table est déjà libre." %}
+    {% endif %}
+  </p>
+
+  <div class="mx-auto mt-8 max-w-xs rounded-2xl border border-line bg-white p-8
+    {% if table.status == 'occupee' %}ring-2 ring-vermilion/40{% endif %}">
+    <p class="font-display text-5xl font-extrabold tabular-nums">{{ table.number }}</p>
+    <p class="mt-2 text-xs font-bold uppercase tracking-wider
+      {% if table.status == 'occupee' %}text-vermilion{% else %}text-ok{% endif %}">
+      {{ table.get_status_display }}
+    </p>
+    <p class="mt-1 text-sm text-ink-soft">{{ table.capacity }} {% trans "personnes" %}</p>
+  </div>
+
+  {% if table.status == "occupee" %}
+    <form method="post" action="{% url 'tables:free_by_pk' pk=table.pk %}" class="mt-8">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'tables:serveur_home' %}">
+      <button type="submit" class="btn-primary w-full py-3.5 text-base">
+        {% trans "Libérer la table" %}
+      </button>
+    </form>
+  {% else %}
+    <a href="{% url 'tables:serveur_home' %}" class="btn-ink mt-8 inline-flex w-full justify-center">
+      {% trans "Retour à l’espace serveur" %}
+    </a>
+  {% endif %}
+</div>
+{% endblock %}

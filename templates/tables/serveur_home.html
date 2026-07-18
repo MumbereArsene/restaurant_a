@@ -1,0 +1,181 @@
+{% extends "serveur_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Espace serveur" %} — {{ restaurant.name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+{% endblock %}
+
+{% block content %}
+{# —— Status strip —— #}
+<div class="mb-5 grid grid-cols-2 gap-3">
+  <div class="rounded-2xl bg-ink px-4 py-3 text-white">
+    <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">{% trans "Occupées" %}</p>
+    <p class="mt-1 font-display text-3xl font-extrabold tabular-nums text-vermilion">{{ busy_count }}</p>
+  </div>
+  <div class="rounded-2xl border border-line bg-white px-4 py-3">
+    <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">{% trans "Libres" %}</p>
+    <p class="mt-1 font-display text-3xl font-extrabold tabular-nums">{{ free_count }}</p>
+  </div>
+</div>
+
+{% if request.GET.ok %}
+  <div class="mb-5 rounded-2xl border border-ok/30 bg-lime-50 px-4 py-3 text-sm font-semibold text-ok">
+    {% blocktrans with n=request.GET.table %}Table {{ n }} libérée.{% endblocktrans %}
+  </div>
+{% endif %}
+
+{# —— Scanner —— #}
+<section class="mb-6">
+  <h1 class="font-display text-2xl font-extrabold tracking-tight">{% trans "Scanner le QR" %}</h1>
+  <p class="mt-1 text-sm text-ink-soft">
+    {% trans "Même QR que le client — la table repasse en Libre." %}
+  </p>
+
+  <div id="reader" class="mt-4 overflow-hidden rounded-2xl border border-line bg-black aspect-square max-h-72"></div>
+  <p id="scan-status" class="mt-3 text-center text-sm text-ink-soft">{% trans "Autorisez la caméra…" %}</p>
+  <p id="scan-error" class="mt-2 hidden text-center text-sm font-medium text-danger"></p>
+
+  <div class="mt-4 rounded-2xl border border-line bg-white p-4">
+    <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">{% trans "Saisie manuelle" %}</p>
+    <div class="mt-2 flex gap-2">
+      <input type="text" id="manual-token" class="field" placeholder="/order/… ou token"
+             autocomplete="off" inputmode="text">
+      <button type="button" id="manual-submit" class="btn-primary btn-sm shrink-0">
+        {% trans "OK" %}
+      </button>
+    </div>
+  </div>
+</section>
+
+{# —— Board —— #}
+<section>
+  <div class="mb-3 flex items-end justify-between gap-2">
+    <h2 class="font-display text-lg font-extrabold">{% trans "Salle" %}</h2>
+    <p class="text-xs text-ink-soft">{% trans "Touchez une table occupée" %}</p>
+  </div>
+
+  <div class="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+    {% for table in tables %}
+      {% if table.status == "occupee" %}
+        <form method="post" action="{% url 'tables:free_by_pk' pk=table.pk %}" class="contents">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'tables:serveur_home' %}">
+          <button type="submit"
+                  class="flex aspect-square w-full flex-col items-center justify-center rounded-2xl bg-ink text-white ring-2 ring-vermilion/50 transition active:scale-95"
+                  aria-label="{% blocktrans with n=table.number %}Libérer table {{ n }}{% endblocktrans %}">
+            <span class="font-display text-2xl font-extrabold tabular-nums">{{ table.number }}</span>
+            <span class="mt-1 text-[9px] font-bold uppercase tracking-wider text-vermilion">{% trans "Occupée" %}</span>
+          </button>
+        </form>
+      {% else %}
+        <div class="flex aspect-square flex-col items-center justify-center rounded-2xl border border-line bg-white">
+          <span class="font-display text-2xl font-extrabold tabular-nums text-ink">{{ table.number }}</span>
+          <span class="mt-1 text-[9px] font-bold uppercase tracking-wider text-ok">{% trans "Libre" %}</span>
+        </div>
+      {% endif %}
+    {% empty %}
+      <p class="col-span-full rounded-2xl border border-dashed border-line px-4 py-10 text-center text-sm text-ink-soft">
+        {% trans "Aucune table configurée." %}
+      </p>
+    {% endfor %}
+  </div>
+</section>
+
+<form id="free-form" method="post" action="{% url 'tables:free_by_token' %}" class="hidden">
+  {% csrf_token %}
+  <input type="hidden" name="token" id="token-input" value="">
+</form>
+
+<script>
+(function () {
+  const statusEl = document.getElementById("scan-status");
+  const errorEl = document.getElementById("scan-error");
+  const tokenInput = document.getElementById("token-input");
+  const form = document.getElementById("free-form");
+  let submitting = false;
+
+  function extractToken(raw) {
+    const text = (raw || "").trim();
+    if (!text) return "";
+    if (text.includes("/order/")) {
+      const part = text.split("/order/")[1] || "";
+      return part.split("/")[0].split("?")[0].trim();
+    }
+    return text;
+  }
+
+  function submitToken(raw) {
+    if (submitting) return;
+    const token = extractToken(raw);
+    if (!token) {
+      errorEl.textContent = "{% trans 'QR invalide.' %}";
+      errorEl.classList.remove("hidden");
+      return;
+    }
+    submitting = true;
+    tokenInput.value = token;
+    statusEl.textContent = "{% trans 'QR reconnu — libération…' %}";
+    errorEl.classList.add("hidden");
+
+    const data = new FormData(form);
+    fetch(form.action, {
+      method: "POST",
+      body: data,
+      headers: { "X-Requested-With": "XMLHttpRequest" },
+      credentials: "same-origin",
+    })
+      .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+      .then(({ ok, j }) => {
+        if (ok && j.redirect) {
+          window.location.href = j.redirect;
+        } else {
+          submitting = false;
+          errorEl.textContent = (j && j.error) || "{% trans 'Échec.' %}";
+          errorEl.classList.remove("hidden");
+        }
+      })
+      .catch(() => {
+        submitting = false;
+        errorEl.textContent = "{% trans 'Erreur réseau.' %}";
+        errorEl.classList.remove("hidden");
+      });
+  }
+
+  document.getElementById("manual-submit").addEventListener("click", function () {
+    submitToken(document.getElementById("manual-token").value);
+  });
+  document.getElementById("manual-token").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      submitToken(this.value);
+    }
+  });
+
+  if (window.Html5Qrcode) {
+    const scanner = new Html5Qrcode("reader");
+    Html5Qrcode.getCameras()
+      .then((cameras) => {
+        if (!cameras || !cameras.length) {
+          statusEl.textContent = "{% trans 'Aucune caméra — utilisez la saisie ou touchez une table.' %}";
+          return;
+        }
+        const back = cameras.find((c) => /back|arrière|environment/i.test(c.label));
+        const camId = (back || cameras[cameras.length - 1]).id;
+        return scanner.start(
+          camId,
+          { fps: 8, qrbox: { width: 220, height: 220 } },
+          (decoded) => {
+            scanner.stop().catch(() => {});
+            submitToken(decoded);
+          },
+          () => {}
+        );
+      })
+      .then(() => { statusEl.textContent = "{% trans 'Cadrez le QR de la table…' %}"; })
+      .catch(() => { statusEl.textContent = "{% trans 'Caméra refusée — saisie manuelle ou touche.' %}"; });
+  }
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% load i18n %}
+<div id="cart-bar" {% if oob %}hx-swap-oob="true"{% endif %}>
+  {% if cart.count %}
+    <div class="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink shadow-[0_-16px_48px_rgba(0,0,0,0.35)]">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 md:px-8">
+        <a href="{% url 'orders:cart' %}" class="min-w-0 text-white">
+          <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-vermilion">
+            {{ cart.count }} {% trans "article(s)" %}
+          </p>
+          <p class="font-display text-xl font-extrabold tabular-nums">{{ cart.total }} {{ CURRENCY }}</p>
+        </a>
+        <a href="{% url 'orders:checkout_scan' %}" class="btn-primary shrink-0 px-6 py-2.5 text-sm">
+          {% trans "Commander" %}
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+<div id="cart-live" class="hidden" aria-hidden="true"></div>

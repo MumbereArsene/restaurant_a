@@ -1,0 +1,28 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Commandes" %}</h1>
+</div>
+
+<div class="mb-5 flex flex-wrap gap-2">
+  <a href="{% url 'orders:staff_list' %}"
+     class="rounded-md px-3 py-1.5 text-sm font-medium {% if not current_status %}bg-ink text-white{% else %}border border-line bg-white text-ink hover:border-ink{% endif %}">
+    {% trans "Toutes" %}
+  </a>
+  {% for value, label in statuses %}
+    <a href="?status={{ value }}"
+       class="rounded-md px-3 py-1.5 text-sm font-medium {% if current_status == value %}bg-ink text-white{% else %}border border-line bg-white text-ink hover:border-ink{% endif %}">
+      {{ label }}
+    </a>
+  {% endfor %}
+</div>
+
+<div id="order-list"
+     hx-get="{% url 'orders:staff_list' %}{% if current_status %}?status={{ current_status }}{% endif %}"
+     hx-trigger="every 5s"
+     hx-swap="innerHTML">
+  {% include "orders/_order_list.html" %}
+</div>
+{% endblock %}

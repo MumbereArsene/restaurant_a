@@ -1,0 +1,103 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="font-display text-3xl font-bold tracking-tight">{{ title }}</h1>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="mx-auto max-w-xl space-y-6">
+  {% csrf_token %}
+
+  <section class="space-y-4 rounded-2xl border border-line bg-white p-5 md:p-6">
+    <h2 class="font-display text-lg font-bold">{% trans "Informations" %}</h2>
+    {% for field in form %}
+      {% if field.name != "image" and field.name != "image_url" and field.name != "clear_image" %}
+        <div>
+          <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<p class="mt-1 text-xs text-ink-soft">{{ field.help_text }}</p>{% endif %}
+          {% if field.errors %}<p class="mt-1 text-sm text-danger">{{ field.errors|striptags }}</p>{% endif %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  </section>
+
+  <section class="space-y-4 rounded-2xl border border-line bg-white p-5 md:p-6">
+    <h2 class="font-display text-lg font-bold">{% trans "Image du plat" %}</h2>
+    <p class="text-sm text-ink-soft">
+      {% trans "Uploadez depuis votre téléphone / ordinateur, ou collez un lien. Le fichier uploadé est prioritaire." %}
+    </p>
+
+    {% if form.instance.pk and form.instance.photo_url %}
+      <div class="overflow-hidden rounded-xl border border-line bg-paper">
+        <img src="{{ form.instance.photo_url }}" alt="" class="mx-auto max-h-48 w-full object-cover" id="image-preview">
+      </div>
+    {% else %}
+      <div class="hidden overflow-hidden rounded-xl border border-line bg-paper" id="preview-wrap">
+        <img src="" alt="" class="mx-auto max-h-48 w-full object-cover" id="image-preview">
+      </div>
+    {% endif %}
+
+    <div>
+      <label class="label" for="{{ form.image.id_for_label }}">{% trans "Uploader (galerie ou caméra)" %}</label>
+      {{ form.image }}
+      {% if form.image.help_text %}<p class="mt-1 text-xs text-ink-soft">{{ form.image.help_text }}</p>{% endif %}
+      {% if form.image.errors %}<p class="mt-1 text-sm text-danger">{{ form.image.errors|striptags }}</p>{% endif %}
+    </div>
+
+    {% if form.instance.image %}
+      <label class="flex items-center gap-2 text-sm">
+        {{ form.clear_image }}
+        <span>{{ form.clear_image.label }}</span>
+      </label>
+    {% endif %}
+
+    <div class="relative py-1 text-center text-xs font-bold uppercase tracking-wider text-ink-soft">
+      <span class="relative z-10 bg-white px-2">{% trans "ou" %}</span>
+      <span class="absolute inset-x-0 top-1/2 h-px bg-line"></span>
+    </div>
+
+    <div>
+      <label class="label" for="{{ form.image_url.id_for_label }}">{% trans "Lien URL de l'image" %}</label>
+      {{ form.image_url }}
+      {% if form.image_url.help_text %}<p class="mt-1 text-xs text-ink-soft">{{ form.image_url.help_text }}</p>{% endif %}
+      {% if form.image_url.errors %}<p class="mt-1 text-sm text-danger">{{ form.image_url.errors|striptags }}</p>{% endif %}
+    </div>
+  </section>
+
+  <div class="flex flex-wrap gap-2">
+    <button type="submit" class="btn-primary">{% trans "Enregistrer" %}</button>
+    <a href="{% url 'menu:staff' %}" class="btn-ghost">{% trans "Annuler" %}</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  const fileInput = document.getElementById("{{ form.image.id_for_label }}");
+  const urlInput = document.getElementById("{{ form.image_url.id_for_label }}");
+  const preview = document.getElementById("image-preview");
+  const wrap = document.getElementById("preview-wrap");
+
+  function showPreview(src) {
+    if (!preview || !src) return;
+    preview.src = src;
+    if (wrap) wrap.classList.remove("hidden");
+  }
+
+  if (fileInput) {
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files && fileInput.files[0];
+      if (file) showPreview(URL.createObjectURL(file));
+    });
+  }
+  if (urlInput) {
+    urlInput.addEventListener("change", () => {
+      if (urlInput.value && !(fileInput && fileInput.files && fileInput.files.length)) {
+        showPreview(urlInput.value);
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

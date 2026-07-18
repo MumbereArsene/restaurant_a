@@ -1,0 +1,92 @@
+{% load i18n %}
+{# Public site navigation — fixed on all viewports #}
+{% with dark=nav_dark|default:False %}
+<header class="site-header fixed inset-x-0 top-0 z-40
+  {% if dark %}site-header--dark border-b border-white/10 bg-ink/80 backdrop-blur-md
+  {% else %}border-b border-line/80 bg-paper/95 backdrop-blur-md{% endif %}">
+  <div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-5 md:h-16 md:px-8">
+    <a href="{% url 'core:home' %}"
+       class="font-display text-lg font-extrabold tracking-tight md:text-xl {% if dark %}text-white{% else %}text-ink{% endif %}">
+      <span class="text-vermilion">●</span> {{ restaurant.name }}
+    </a>
+
+    {# Desktop nav #}
+    <nav class="hidden items-center gap-6 text-sm font-semibold lg:flex lg:gap-8 {% if dark %}text-white/90{% else %}text-ink{% endif %}"
+         aria-label="{% trans 'Navigation principale' %}">
+      <a href="{% url 'menu:public' %}" class="nav-underline">{% trans "Menu" %}</a>
+      <a href="{% url 'reservations:create' %}" class="nav-underline">{% trans "Réserver" %}</a>
+      <a href="{% url 'core:contact' %}" class="nav-underline">{% trans "Contact" %}</a>
+      <form action="{% url 'set_language' %}" method="post" class="inline">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        <select name="language" onchange="this.form.submit()"
+                class="cursor-pointer rounded-full border px-2.5 py-1 text-xs outline-none
+                  {% if dark %}border-white/30 bg-transparent text-white{% else %}border-line bg-white text-ink{% endif %}"
+                aria-label="{% trans 'Langue' %}">
+          {% get_current_language as CURRENT_LANG %}
+          {% get_available_languages as LANGS %}
+          {% for code, label in LANGS %}
+            <option value="{{ code }}" class="text-ink" {% if code == CURRENT_LANG %}selected{% endif %}>{{ code|upper }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <a href="{% url 'menu:public' %}" class="btn-primary btn-sm">{% trans "Commander" %}</a>
+    </nav>
+
+    {# Mobile hamburger #}
+    <button type="button"
+            class="hamburger lg:hidden {% if dark %}hamburger--light{% endif %}"
+            data-nav-toggle
+            aria-expanded="false"
+            aria-controls="mobile-nav"
+            aria-label="{% trans 'Ouvrir le menu' %}">
+      <span class="hamburger-box" aria-hidden="true">
+        <span class="hamburger-inner"></span>
+      </span>
+    </button>
+  </div>
+</header>
+{# Reserve space so content is not hidden under the fixed header (home hero handles its own padding) #}
+{% if not dark %}
+  <div class="h-14 md:h-16" aria-hidden="true"></div>
+{% endif %}
+
+{# Mobile drawer #}
+<div id="mobile-nav" class="mobile-nav" data-nav-panel hidden>
+  <div class="mobile-nav__backdrop" data-nav-close tabindex="-1"></div>
+  <aside class="mobile-nav__panel" role="dialog" aria-modal="true" aria-label="{% trans 'Menu' %}">
+    <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+      <p class="font-display text-lg font-extrabold text-white">
+        <span class="text-vermilion">●</span> {{ restaurant.name }}
+      </p>
+      <button type="button" class="hamburger hamburger--light is-active" data-nav-close aria-label="{% trans 'Fermer le menu' %}">
+        <span class="hamburger-box" aria-hidden="true"><span class="hamburger-inner"></span></span>
+      </button>
+    </div>
+    <nav class="flex flex-col gap-1 px-3 py-4 text-base font-semibold text-white">
+      <a href="{% url 'core:home' %}" class="mobile-nav__link" data-nav-close>{% trans "Accueil" %}</a>
+      <a href="{% url 'menu:public' %}" class="mobile-nav__link" data-nav-close>{% trans "Menu" %}</a>
+      <a href="{% url 'reservations:create' %}" class="mobile-nav__link" data-nav-close>{% trans "Réserver" %}</a>
+      <a href="{% url 'core:contact' %}" class="mobile-nav__link" data-nav-close>{% trans "Contact" %}</a>
+      <a href="{% url 'core:legal' %}" class="mobile-nav__link text-white/55" data-nav-close>{% trans "Mentions légales" %}</a>
+      <a href="{% url 'core:terms' %}" class="mobile-nav__link text-white/55" data-nav-close>{% trans "Politique d'utilisation" %}</a>
+    </nav>
+    <div class="mt-auto space-y-4 border-t border-white/10 p-5">
+      <form action="{% url 'set_language' %}" method="post">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        <label class="mb-1.5 block text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">{% trans "Langue" %}</label>
+        <select name="language" onchange="this.form.submit()"
+                class="w-full cursor-pointer rounded-xl border border-white/20 bg-white/5 px-3 py-2.5 text-sm text-white outline-none">
+          {% get_current_language as CURRENT_LANG %}
+          {% get_available_languages as LANGS %}
+          {% for code, label in LANGS %}
+            <option value="{{ code }}" class="text-ink" {% if code == CURRENT_LANG %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <a href="{% url 'menu:public' %}" class="btn-primary w-full" data-nav-close>{% trans "Commander" %}</a>
+    </div>
+  </aside>
+</div>
+{% endwith %}

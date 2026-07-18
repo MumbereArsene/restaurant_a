@@ -1,0 +1,111 @@
+{% load static i18n %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Staff — {{ restaurant.name }}{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% if restaurant %}
+  <style>:root { {{ restaurant.theme_css }} }</style>
+  {% endif %}
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-surface lg:grid lg:grid-cols-[240px_1fr]" style="{% if restaurant %}{{ restaurant.theme_css }}{% endif %}">
+
+  {# —— Mobile top bar (fixed) —— #}
+  <header class="no-print fixed inset-x-0 top-0 z-40 flex h-14 items-center justify-between border-b border-white/10 bg-staff-rail px-4 text-white lg:hidden">
+    <div class="min-w-0">
+      <p class="truncate font-display text-base font-extrabold tracking-tight">
+        <span class="text-vermilion">●</span> {{ restaurant.name }}
+      </p>
+      <p class="text-[10px] uppercase tracking-[0.18em] text-white/40">{% trans "Back-office" %}</p>
+    </div>
+    <button type="button"
+            class="hamburger hamburger--light"
+            data-nav-toggle
+            aria-expanded="false"
+            aria-controls="staff-mobile-nav"
+            aria-label="{% trans 'Ouvrir le menu' %}">
+      <span class="hamburger-box" aria-hidden="true"><span class="hamburger-inner"></span></span>
+    </button>
+  </header>
+
+  {# —— Desktop sidebar —— #}
+  <aside class="no-print hidden flex-col bg-staff-rail text-white lg:sticky lg:top-0 lg:flex lg:h-screen">
+    <div class="border-b border-white/10 px-5 py-5">
+      <p class="font-display text-lg font-extrabold tracking-tight">
+        <span class="text-vermilion">●</span> {{ restaurant.name }}
+      </p>
+      <p class="mt-0.5 text-[11px] uppercase tracking-[0.18em] text-white/40">{% trans "Back-office" %}</p>
+    </div>
+
+    <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+      {% include "partials/staff_nav_links.html" %}
+    </nav>
+
+    <div class="border-t border-white/10 p-4">
+      <p class="text-sm font-medium">{{ user.get_full_name|default:user.username }}</p>
+      <p class="text-xs text-white/45">{{ user.get_role_display }}</p>
+      <form action="{% url 'accounts:logout' %}" method="post" class="mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn-ghost btn-sm w-full border-white/25 text-white/80 hover:bg-white/10">
+          {% trans "Déconnexion" %}
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  {# —— Mobile drawer —— #}
+  <div id="staff-mobile-nav" class="mobile-nav lg:hidden" data-nav-panel hidden>
+    <div class="mobile-nav__backdrop" data-nav-close tabindex="-1"></div>
+    <aside class="staff-mobile-panel" role="dialog" aria-modal="true" aria-label="{% trans 'Menu staff' %}">
+      <div class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+        <div>
+          <p class="font-display text-lg font-extrabold text-white">
+            <span class="text-vermilion">●</span> {{ restaurant.name }}
+          </p>
+          <p class="text-[10px] uppercase tracking-[0.18em] text-white/40">{% trans "Back-office" %}</p>
+        </div>
+        <button type="button" class="hamburger hamburger--light is-active" data-nav-close aria-label="{% trans 'Fermer le menu' %}">
+          <span class="hamburger-box" aria-hidden="true"><span class="hamburger-inner"></span></span>
+        </button>
+      </div>
+      <nav class="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+        {% include "partials/staff_nav_links.html" with mobile=True %}
+      </nav>
+      <div class="border-t border-white/10 p-4">
+        <p class="text-sm font-medium text-white">{{ user.get_full_name|default:user.username }}</p>
+        <p class="text-xs text-white/45">{{ user.get_role_display }}</p>
+        <form action="{% url 'accounts:logout' %}" method="post" class="mt-3">
+          {% csrf_token %}
+          <button type="submit" class="btn-ghost btn-sm w-full border-white/25 text-white/80 hover:bg-white/10">
+            {% trans "Déconnexion" %}
+          </button>
+        </form>
+      </div>
+    </aside>
+  </div>
+
+  <div class="min-w-0 px-4 pb-8 pt-20 md:px-8 md:pb-10 lg:pt-8">
+    {% if messages %}
+      <div class="mb-5 space-y-2">
+        {% for message in messages %}
+          <div class="rounded-xl border px-4 py-2.5 text-sm
+            {% if message.tags == 'error' %}border-danger/30 bg-red-50 text-danger{% else %}border-ok/30 bg-lime-50 text-ok{% endif %}">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </div>
+
+  <script src="{% static 'js/site-nav.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

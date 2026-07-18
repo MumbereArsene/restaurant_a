@@ -1,0 +1,217 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-8">
+  <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-soft">{% trans "Configuration" %}</p>
+  <h1 class="mt-1 font-display text-3xl font-bold tracking-tight">{% trans "Paramètres du site" %}</h1>
+  <p class="mt-2 max-w-xl text-sm text-ink-soft">
+    {% trans "Identité, contact et palette de couleurs. Les couleurs s’appliquent immédiatement sur le site public et le back-office." %}
+  </p>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="settings-form" class="space-y-8">
+  {% csrf_token %}
+
+  {# —— Identity —— #}
+  <section class="rounded-2xl border border-line bg-white p-6 md:p-8">
+    <h2 class="font-display text-xl font-bold">{% trans "Identité" %}</h2>
+    <p class="mt-1 text-sm text-ink-soft">{% trans "Ce que vos clients voient en premier." %}</p>
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      <div class="md:col-span-2">
+        <label class="label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+        {{ form.name }}
+      </div>
+      <div>
+        <label class="label" for="{{ form.description_fr.id_for_label }}">{{ form.description_fr.label }}</label>
+        {{ form.description_fr }}
+      </div>
+      <div>
+        <label class="label" for="{{ form.description_en.id_for_label }}">{{ form.description_en.label }}</label>
+        {{ form.description_en }}
+      </div>
+      <div class="md:col-span-2">
+        <h3 class="mb-3 text-sm font-bold uppercase tracking-wider text-ink-soft">{% trans "Images" %}</h3>
+        <p class="mb-4 text-sm text-ink-soft">
+          {% trans "Uploadez un fichier (téléphone / PC) ou collez un lien URL. Le fichier uploadé est prioritaire." %}
+        </p>
+        <div class="grid gap-6 md:grid-cols-2">
+          <div class="space-y-3 rounded-xl border border-line bg-paper/50 p-4">
+            <p class="font-semibold">{% trans "Logo" %}</p>
+            {% if restaurant_obj.logo_src %}
+              <img src="{{ restaurant_obj.logo_src }}" alt="" class="h-16 w-16 rounded-lg object-cover">
+            {% endif %}
+            <div>
+              <label class="label" for="{{ form.logo.id_for_label }}">{% trans "Uploader" %}</label>
+              {{ form.logo }}
+            </div>
+            <div>
+              <label class="label" for="{{ form.logo_url.id_for_label }}">{% trans "Lien URL" %}</label>
+              {{ form.logo_url }}
+            </div>
+          </div>
+          <div class="space-y-3 rounded-xl border border-line bg-paper/50 p-4">
+            <p class="font-semibold">{% trans "Couverture" %}</p>
+            {% if restaurant_obj.cover_src %}
+              <img src="{{ restaurant_obj.cover_src }}" alt="" class="h-24 w-full rounded-lg object-cover">
+            {% endif %}
+            <div>
+              <label class="label" for="{{ form.cover_image.id_for_label }}">{% trans "Uploader" %}</label>
+              {{ form.cover_image }}
+            </div>
+            <div>
+              <label class="label" for="{{ form.cover_image_url.id_for_label }}">{% trans "Lien URL" %}</label>
+              {{ form.cover_image_url }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# —— Contact —— #}
+  <section class="rounded-2xl border border-line bg-white p-6 md:p-8">
+    <h2 class="font-display text-xl font-bold">{% trans "Contact & horaires" %}</h2>
+    <div class="mt-6 grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="label" for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+        {{ form.address }}
+      </div>
+      <div>
+        <label class="label" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+        {{ form.phone }}
+      </div>
+      <div class="md:col-span-2">
+        <label class="label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+        {{ form.email }}
+      </div>
+      <div>
+        <label class="label" for="{{ form.opening_hours_fr.id_for_label }}">{{ form.opening_hours_fr.label }}</label>
+        {{ form.opening_hours_fr }}
+      </div>
+      <div>
+        <label class="label" for="{{ form.opening_hours_en.id_for_label }}">{{ form.opening_hours_en.label }}</label>
+        {{ form.opening_hours_en }}
+      </div>
+    </div>
+  </section>
+
+  {# —— Palette —— #}
+  <section class="rounded-2xl border border-line bg-white p-6 md:p-8">
+    <h2 class="font-display text-xl font-bold">{% trans "Palette de couleurs" %}</h2>
+    <p class="mt-1 text-sm text-ink-soft">
+      {% trans "Choisissez un thème prêt à l’emploi, ou affinez chaque teinte." %}
+    </p>
+
+    <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {% for p in presets %}
+        <button type="button"
+                class="preset-btn rounded-xl border border-line p-3 text-left transition hover:border-ink"
+                data-ink="{{ p.ink }}"
+                data-paper="{{ p.paper }}"
+                data-surface="{{ p.surface }}"
+                data-accent="{{ p.accent }}"
+                data-accent-dark="{{ p.accent_dark }}">
+          <div class="mb-2 flex h-8 overflow-hidden rounded-md">
+            <span class="flex-1" style="background:{{ p.ink }}"></span>
+            <span class="flex-1" style="background:{{ p.accent }}"></span>
+            <span class="flex-1" style="background:{{ p.paper }}"></span>
+          </div>
+          <p class="text-sm font-semibold">{{ p.label }}</p>
+        </button>
+      {% endfor %}
+    </div>
+
+    <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+      {% for field in form %}
+        {% if field.name|slice:":6" == "color_" %}
+          <div>
+            <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            <div class="flex items-center gap-2">
+              {{ field }}
+              <input type="text" class="field flex-1 font-mono text-xs" value="{{ field.value|default:'' }}"
+                     data-hex-for="{{ field.id_for_label }}" maxlength="7"
+                     oninput="syncHexToColor(this)">
+            </div>
+            {% if field.errors %}<p class="mt-1 text-sm text-danger">{{ field.errors|striptags }}</p>{% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+    {# Live preview #}
+    <div id="theme-preview" class="mt-8 overflow-hidden rounded-xl border border-line">
+      <div class="px-5 py-4" style="background:var(--preview-ink,#121212);color:#fff">
+        <p class="font-display text-lg font-bold" id="preview-name">{{ restaurant_obj.name }}</p>
+        <p class="text-xs opacity-60">{% trans "Aperçu en direct" %}</p>
+      </div>
+      <div class="flex items-center justify-between gap-3 px-5 py-4" style="background:var(--preview-paper,#E8E6E1)">
+        <div>
+          <p class="text-sm font-semibold" style="color:var(--preview-ink,#121212)">{% trans "Plat exemple" %}</p>
+          <p class="text-xs" style="color:#5c5a56">{% trans "Description courte" %}</p>
+        </div>
+        <button type="button" class="rounded-full px-4 py-2 text-xs font-bold text-white"
+                style="background:var(--preview-accent,#C2410C)">{% trans "Ajouter" %}</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="flex flex-wrap gap-3">
+    <button type="submit" class="btn-primary">{% trans "Enregistrer les paramètres" %}</button>
+    <a href="{% url 'core:home' %}" target="_blank" class="btn-ghost">{% trans "Voir le site" %}</a>
+  </div>
+</form>
+
+<script>
+  const fields = {
+    ink: document.getElementById("{{ form.color_ink.id_for_label }}"),
+    paper: document.getElementById("{{ form.color_paper.id_for_label }}"),
+    surface: document.getElementById("{{ form.color_surface.id_for_label }}"),
+    accent: document.getElementById("{{ form.color_accent.id_for_label }}"),
+    accentDark: document.getElementById("{{ form.color_accent_dark.id_for_label }}"),
+  };
+
+  function applyPreview() {
+    const root = document.documentElement;
+    const preview = document.getElementById("theme-preview");
+    preview.style.setProperty("--preview-ink", fields.ink.value);
+    preview.style.setProperty("--preview-paper", fields.paper.value);
+    preview.style.setProperty("--preview-accent", fields.accent.value);
+    // Live site preview while editing
+    root.style.setProperty("--color-ink", fields.ink.value);
+    root.style.setProperty("--color-paper", fields.paper.value);
+    root.style.setProperty("--color-surface", fields.surface.value);
+    root.style.setProperty("--color-vermilion", fields.accent.value);
+    root.style.setProperty("--color-vermilion-dark", fields.accentDark.value);
+    document.querySelectorAll("[data-hex-for]").forEach((el) => {
+      const colorEl = document.getElementById(el.dataset.hexFor);
+      if (colorEl) el.value = colorEl.value.toUpperCase();
+    });
+  }
+
+  function syncHexToColor(input) {
+    const colorEl = document.getElementById(input.dataset.hexFor);
+    if (colorEl && /^#[0-9A-Fa-f]{6}$/.test(input.value)) {
+      colorEl.value = input.value;
+      applyPreview();
+    }
+  }
+
+  Object.values(fields).forEach((el) => el && el.addEventListener("input", applyPreview));
+
+  document.querySelectorAll(".preset-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      fields.ink.value = btn.dataset.ink;
+      fields.paper.value = btn.dataset.paper;
+      fields.surface.value = btn.dataset.surface;
+      fields.accent.value = btn.dataset.accent;
+      fields.accentDark.value = btn.dataset.accentDark;
+      applyPreview();
+      document.querySelectorAll(".preset-btn").forEach((b) => b.classList.remove("ring-2", "ring-ink"));
+      btn.classList.add("ring-2", "ring-ink");
+    });
+  });
+
+  applyPreview();
+</script>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% load i18n cart_tags %}
+
+{% block title %}{% trans "Menu" %} — {{ restaurant.name }}{% endblock %}
+
+{% block body_class %}pb-24{% endblock %}
+
+{% block content %}
+<div class="relative overflow-hidden bg-ink text-white">
+  <div class="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-vermilion/25 blur-3xl"></div>
+  <div class="pointer-events-none absolute -bottom-20 left-10 h-40 w-40 rounded-full bg-vermilion/15 blur-3xl"></div>
+  <div class="relative mx-auto flex max-w-6xl items-end justify-between gap-4 px-4 py-7 md:px-8 md:py-9">
+    <div>
+      <p class="text-[10px] font-bold uppercase tracking-[0.28em] text-vermilion">{% trans "Carte" %}</p>
+      <h1 class="mt-1 font-display text-3xl font-extrabold tracking-tight md:text-4xl">{% trans "Menu" %}</h1>
+    </div>
+    <p class="hidden max-w-xs text-right text-xs leading-relaxed text-white/50 sm:block">
+      {% trans "Touchez un plat pour le détail. Ajoutez, puis Commander." %}
+    </p>
+  </div>
+</div>
+
+<div class="sticky top-14 z-20 border-b border-line bg-paper/95 backdrop-blur-md md:top-16">
+  <nav class="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-3 md:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    {% for category in categories %}
+      <a href="#cat-{{ category.pk }}" class="chip hover:border-vermilion hover:bg-vermilion hover:text-ink">
+        {{ category.name }}
+      </a>
+    {% endfor %}
+  </nav>
+</div>
+
+<div class="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
+  {% for category in categories %}
+    <section id="cat-{{ category.pk }}" class="mb-10 scroll-mt-36">
+      <div class="mb-3 flex items-center gap-3">
+        <h2 class="font-display text-lg font-extrabold tracking-tight md:text-xl">{{ category.name }}</h2>
+        <span class="h-px flex-1 bg-line"></span>
+      </div>
+
+      <ul class="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+        {% for dish in category.dishes.all %}
+          {% with qty=cart|cart_qty:dish.pk %}
+          <li class="group flex overflow-hidden rounded-2xl border border-line bg-white transition duration-200 hover:-translate-y-0.5 hover:border-vermilion/40 hover:shadow-[0_12px_32px_-16px_rgba(255,90,0,0.45)]">
+            <button type="button"
+                    class="relative h-[88px] w-[88px] shrink-0 overflow-hidden bg-paper-deep text-left"
+                    hx-get="{% url 'menu:dish_detail' pk=dish.pk %}"
+                    hx-target="#dish-modal-content"
+                    hx-swap="innerHTML"
+                    onclick="openDishDetail()"
+                    aria-label="{% trans 'Voir le détail' %} — {{ dish.name }}">
+              {% if dish.photo_url %}
+                <img src="{{ dish.photo_url }}" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" width="176" height="176">
+              {% else %}
+                <span class="flex h-full items-center justify-center text-[10px] text-ink-soft">—</span>
+              {% endif %}
+              {% if qty %}
+                <span class="absolute left-1.5 top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-vermilion px-1 text-[10px] font-extrabold text-ink">{{ qty }}</span>
+              {% endif %}
+            </button>
+
+            <div class="flex min-w-0 flex-1 flex-col justify-between gap-2 p-2.5 pl-3">
+              <button type="button" class="text-left"
+                      hx-get="{% url 'menu:dish_detail' pk=dish.pk %}"
+                      hx-target="#dish-modal-content"
+                      hx-swap="innerHTML"
+                      onclick="openDishDetail()">
+                <p class="truncate text-sm font-bold tracking-tight">{{ dish.name }}</p>
+                {% if dish.description %}
+                  <p class="mt-0.5 line-clamp-1 text-[11px] leading-snug text-ink-soft">{{ dish.description }}</p>
+                {% endif %}
+              </button>
+              <div class="flex items-center justify-between gap-2">
+                <p class="font-display text-sm font-extrabold tabular-nums text-vermilion">{{ dish.price }}&nbsp;{{ CURRENCY }}</p>
+                {% include "orders/partials/dish_qty.html" with dish=dish cart=cart %}
+              </div>
+            </div>
+          </li>
+          {% endwith %}
+        {% empty %}
+          <li class="text-sm text-ink-soft">{% trans "Aucun plat." %}</li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% empty %}
+    <p class="text-ink-soft">{% trans "Le menu sera bientôt disponible." %}</p>
+  {% endfor %}
+</div>
+
+<div id="dish-modal" class="fixed inset-0 z-50 hidden items-end justify-center bg-ink/60 p-0 backdrop-blur-[3px] md:items-center md:p-6"
+     onclick="if(event.target===this) closeDishDetail()" role="dialog" aria-modal="true">
+  <div id="dish-modal-content" class="w-full max-w-md animate-[reveal-up_0.35s_ease]"></div>
+</div>
+
+{% include "orders/partials/cart_bar.html" with cart=cart %}
+
+<script>
+  function openDishDetail() {
+    const m = document.getElementById("dish-modal");
+    m.classList.remove("hidden");
+    m.classList.add("flex");
+    document.body.style.overflow = "hidden";
+  }
+  function closeDishDetail() {
+    const m = document.getElementById("dish-modal");
+    m.classList.add("hidden");
+    m.classList.remove("flex");
+    document.getElementById("dish-modal-content").innerHTML = "";
+    document.body.style.overflow = "";
+  }
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeDishDetail(); });
+</script>
+{% endblock %}

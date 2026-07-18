@@ -1,0 +1,106 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+  <div>
+    <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-soft">{% now "l j F Y" %}</p>
+    <h1 class="mt-1 font-display text-3xl font-bold tracking-tight">{% trans "Tableau de bord" %}</h1>
+  </div>
+</div>
+
+<div class="mb-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Commandes du jour" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ orders_today_count }}</p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "En cours" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums text-vermilion">{{ orders_pending_count }}</p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Recettes payées" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ revenue_today }}&nbsp;{{ CURRENCY }}</p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Tables" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ tables_occupied }}<span class="text-lg text-ink-soft">/{{ tables_total }}</span></p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Réservations du jour" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ reservations_today }}</p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "À traiter" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ reservations_pending }}</p>
+  </div>
+  {% if user.can_access_cash %}
+  <div class="rounded-lg border border-line bg-white p-5 sm:col-span-2">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Solde de caisse" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ cash_balance }}&nbsp;{{ CURRENCY }}</p>
+  </div>
+  {% endif %}
+  {% if user.can_approve_discount and pending_discounts %}
+  <div class="rounded-lg border border-vermilion/40 bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Remises à valider" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums text-vermilion">{{ pending_discounts }}</p>
+  </div>
+  {% endif %}
+</div>
+
+{% if tables %}
+<div class="mb-10">
+  <div class="mb-4 flex items-center justify-between gap-3">
+    <h2 class="font-display text-xl font-bold">{% trans "Salle" %}</h2>
+    {% if user.can_free_tables %}
+      <a href="{% url 'tables:serveur_home' %}" class="text-sm font-bold text-vermilion hover:underline">{% trans "Espace serveur" %} →</a>
+    {% endif %}
+  </div>
+  <div class="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+    {% for table in tables %}
+      <div class="rounded-xl border p-3 text-center
+        {% if table.status == 'occupee' %}border-vermilion/40 bg-ink text-white{% else %}border-line bg-white{% endif %}">
+        <p class="font-display text-xl font-extrabold">{{ table.number }}</p>
+        <p class="text-[10px] font-bold uppercase {% if table.status == 'occupee' %}text-vermilion{% else %}text-ok{% endif %}">
+          {{ table.get_status_display }}
+        </p>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="flex items-center justify-between">
+  <h2 class="font-display text-xl font-bold">{% trans "Dernières commandes" %}</h2>
+  <a href="{% url 'orders:staff_list' %}" class="text-sm font-semibold text-vermilion hover:underline">{% trans "Tout voir" %}</a>
+</div>
+
+<div class="mt-4 overflow-x-auto">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>{% trans "Table" %}</th>
+        <th>{% trans "Statut" %}</th>
+        <th>{% trans "Total" %}</th>
+        <th>{% trans "Heure" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in latest_orders %}
+        <tr>
+          <td><a class="font-semibold hover:text-vermilion" href="{% url 'orders:staff_detail' pk=order.pk %}">#{{ order.pk }}</a></td>
+          <td>{{ order.table }}</td>
+          <td>
+            {% if order.status == "en_attente" %}<span class="badge-wait">{% elif order.status == "en_preparation" %}<span class="badge-prep">{% elif order.status == "servie" %}<span class="badge-done">{% elif order.status == "payee" %}<span class="badge-paid">{% else %}<span class="badge-cancel">{% endif %}{{ order.get_status_display }}</span>
+          </td>
+          <td class="tabular-nums">{{ order.total }} {{ CURRENCY }}</td>
+          <td>{{ order.created_at|date:"H:i" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="text-ink-soft">{% trans "Aucune commande pour le moment." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

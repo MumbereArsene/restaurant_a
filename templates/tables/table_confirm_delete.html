@@ -1,0 +1,33 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block content %}
+<div class="mx-auto max-w-md">
+  <h1 class="font-display text-3xl font-bold tracking-tight">
+    {% trans "Supprimer la table" %} {{ table.number }}
+  </h1>
+
+  {% if orders_count %}
+    <div class="mt-5 rounded-xl border border-danger/30 bg-red-50 px-4 py-3 text-sm text-danger">
+      {% blocktrans count counter=orders_count %}
+        Cette table a {{ counter }} commande liée. La suppression n’est pas possible.
+      {% plural %}
+        Cette table a {{ counter }} commandes liées. La suppression n’est pas possible.
+      {% endblocktrans %}
+    </div>
+    <p class="mt-4 text-sm text-ink-soft">
+      {% trans "Les commandes conservent l’historique de la table. Vous pouvez la laisser inactive côté salle en la libérant, mais pas la supprimer." %}
+    </p>
+    <a href="{% url 'tables:list' %}" class="btn-ink mt-6 inline-flex">{% trans "Retour à la liste" %}</a>
+  {% else %}
+    <p class="mt-4 text-ink-soft">
+      {% trans "Cette action est définitive. Le QR code imprimé pour cette table ne fonctionnera plus." %}
+    </p>
+    <form method="post" class="mt-6 flex flex-wrap gap-2">
+      {% csrf_token %}
+      <button type="submit" class="btn-danger">{% trans "Oui, supprimer" %}</button>
+      <a href="{% url 'tables:list' %}" class="btn-ghost">{% trans "Annuler" %}</a>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

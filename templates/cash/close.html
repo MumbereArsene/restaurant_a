@@ -1,0 +1,43 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Clôturer la caisse" %} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="{% url 'cash:ledger' %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour caisse" %}</a>
+  <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight">{% trans "Clôturer la caisse" %}</h1>
+  <p class="mt-1 text-sm text-ink-soft">
+    {% blocktrans with d=period_start|date:"d/m/Y H:i" %}Période depuis {{ d }} jusqu’à maintenant.{% endblocktrans %}
+  </p>
+</div>
+
+<div class="mb-8 grid gap-3 sm:grid-cols-3">
+  <div class="rounded-2xl border border-line bg-white p-5">
+    <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Entrées" %}</p>
+    <p class="mt-2 font-display text-2xl font-bold text-ok tabular-nums">+{{ total_in }} {{ CURRENCY }}</p>
+  </div>
+  <div class="rounded-2xl border border-line bg-white p-5">
+    <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Sorties" %}</p>
+    <p class="mt-2 font-display text-2xl font-bold text-danger tabular-nums">−{{ total_out }} {{ CURRENCY }}</p>
+  </div>
+  <div class="rounded-2xl bg-ink p-5 text-white">
+    <p class="text-xs uppercase tracking-wider text-white/45">{% trans "Attendu dans le tiroir" %}</p>
+    <p class="mt-2 font-display text-2xl font-extrabold tabular-nums text-vermilion">{{ expected }} {{ CURRENCY }}</p>
+  </div>
+</div>
+
+<form method="post" class="max-w-md space-y-4 rounded-2xl border border-line bg-white p-6">
+  {% csrf_token %}
+  <div>
+    <label class="label" for="{{ form.counted_amount.id_for_label }}">{{ form.counted_amount.label }}</label>
+    {{ form.counted_amount }}
+    {% if form.counted_amount.errors %}<p class="mt-1 text-sm text-danger">{{ form.counted_amount.errors|striptags }}</p>{% endif %}
+  </div>
+  <div>
+    <label class="label" for="{{ form.notes.id_for_label }}">{{ form.notes.label }}</label>
+    {{ form.notes }}
+  </div>
+  <button type="submit" class="btn-primary w-full">{% trans "Valider la clôture" %}</button>
+</form>
+{% endblock %}
