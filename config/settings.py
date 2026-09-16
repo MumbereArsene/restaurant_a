@@ -64,7 +64,6 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "cloudinary_storage",
     "django.contrib.staticfiles",
     "cloudinary",
     # Local apps
@@ -76,6 +75,9 @@ INSTALLED_APPS = [
     "reservations",
     "cash",
     "analytics",
+    # Kept last so cloudinary_storage's legacy collectstatic command
+    # (reads removed STATICFILES_STORAGE) never overrides Django's own.
+    "cloudinary_storage",
 ]
 
 MIDDLEWARE = [
