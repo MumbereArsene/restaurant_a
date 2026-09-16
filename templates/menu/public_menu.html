@@ -21,16 +21,58 @@
 </div>
 
 <div class="sticky top-14 z-20 border-b border-line bg-paper/95 backdrop-blur-md md:top-16">
-  <nav class="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-3 md:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-    {% for category in categories %}
-      <a href="#cat-{{ category.pk }}" class="chip hover:border-vermilion hover:bg-vermilion hover:text-ink">
-        {{ category.name }}
-      </a>
-    {% endfor %}
-  </nav>
+  <form method="get" action="{% url 'menu:public' %}"
+        class="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-4 py-3 md:px-8">
+    <div class="min-w-[200px] flex-1">
+      <input type="search" name="q" value="{{ filters.q }}" placeholder="{% trans 'Rechercher un plat…' %}"
+             class="field !mb-0 w-full">
+    </div>
+    <select name="cat" class="field !mb-0 w-auto">
+      <option value="">{% trans "Toutes les catégories" %}</option>
+      {% for category in all_categories %}
+        <option value="{{ category.pk }}" {% if filters.cat == category.pk|stringformat:"s" %}selected{% endif %}>
+          {{ category.name }}
+        </option>
+      {% endfor %}
+    </select>
+    <input type="number" name="max" value="{{ filters.max }}" min="0" step="0.01"
+           placeholder="{% trans 'Prix max' %}" class="field !mb-0 w-28">
+    <select name="sort" class="field !mb-0 w-auto">
+      <option value="" {% if not filters.sort %}selected{% endif %}>{% trans "Tri" %}</option>
+      <option value="price_asc" {% if filters.sort == "price_asc" %}selected{% endif %}>{% trans "Prix croissant" %}</option>
+      <option value="price_desc" {% if filters.sort == "price_desc" %}selected{% endif %}>{% trans "Prix décroissant" %}</option>
+    </select>
+    <button type="submit" class="btn-primary btn-sm">{% trans "Filtrer" %}</button>
+    {% if has_filters %}
+      <a href="{% url 'menu:public' %}" class="btn-ghost btn-sm">{% trans "Réinitialiser" %}</a>
+    {% endif %}
+  </form>
+
+  {% if categories %}
+    <nav class="mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 pb-3 md:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {% for category in categories %}
+        <a href="#cat-{{ category.pk }}" class="chip hover:border-vermilion hover:bg-vermilion hover:text-ink">
+          {{ category.name }}
+        </a>
+      {% endfor %}
+    </nav>
+  {% endif %}
 </div>
 
 <div class="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
+  {% if has_filters %}
+    <p class="mb-6 text-sm text-ink-soft">
+      {% blocktrans count counter=result_count %}{{ counter }} plat trouvé.{% plural %}{{ counter }} plats trouvés.{% endblocktrans %}
+    </p>
+    {% if result_count == 0 %}
+      <div class="rounded-2xl border border-dashed border-line px-4 py-12 text-center">
+        <p class="font-display text-lg font-bold text-ink">{% trans "Aucun plat ne correspond à votre recherche." %}</p>
+        <p class="mt-1 text-sm text-ink-soft">{% trans "Essayez d'élargir les filtres." %}</p>
+        <a href="{% url 'menu:public' %}" class="btn-ink btn-sm mt-4">{% trans "Tout afficher" %}</a>
+      </div>
+    {% endif %}
+  {% endif %}
+
   {% for category in categories %}
     <section id="cat-{{ category.pk }}" class="mb-10 scroll-mt-36">
       <div class="mb-3 flex items-center gap-3">
@@ -91,8 +133,6 @@
      onclick="if(event.target===this) closeDishDetail()" role="dialog" aria-modal="true">
   <div id="dish-modal-content" class="w-full max-w-md animate-[reveal-up_0.35s_ease]"></div>
 </div>
-
-{% include "orders/partials/cart_bar.html" with cart=cart %}
 
 <script>
   function openDishDetail() {

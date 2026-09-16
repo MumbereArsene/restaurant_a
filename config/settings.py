@@ -1,23 +1,22 @@
 """
-Django settings — local (SQLite) + Northflank production (Postgres + Cloudinary).
+Django settings — local SQLite, Neon/Postgres via DATABASE_URL, Cloudinary in prod.
 """
 
 import os
 from pathlib import Path
+import sys
 
 import dj_database_url
 from dotenv import load_dotenv
+
+from config.security import DEV_SECRET_KEY, validate_production_settings
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR / ".env")
 
-SECRET_KEY = os.getenv(
-    "SECRET_KEY",
-    "django-insecure-dev-only-key-change-me-in-production",
-)
-
 DEBUG = os.getenv("DEBUG", "1") == "1"
+SECRET_KEY = os.getenv("SECRET_KEY", "").strip() or (DEV_SECRET_KEY if DEBUG else "")
 
 # Comma-separated hosts + optional Northflank / public domain
 _hosts = [
@@ -76,6 +75,7 @@ INSTALLED_APPS = [
     "orders",
     "reservations",
     "cash",
+    "analytics",
 ]
 
 MIDDLEWARE = [
@@ -104,6 +104,8 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.i18n",
                 "core.context_processors.restaurant",
+                "orders.context_processors.cart",
+                "orders.context_processors.staff_chrome",
             ],
         },
     },
@@ -113,17 +115,39 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 # ---------------------------------------------------------------------------
-# Database: DATABASE_URL (Northflank Postgres) > explicit PG > SQLite
+# Database: DATABASE_URL (Neon / any Postgres) > explicit PG > SQLite
 # ---------------------------------------------------------------------------
+def _is_neon_url(url: str) -> bool:
+    lowered = url.lower()
+    return "neon.tech" in lowered or "neon.database" in lowered
+
+
+def _is_pgbouncer_url(url: str) -> bool:
+    lowered = url.lower()
+    return "-pooler." in lowered or os.getenv("DB_PGBOUNCER", "").strip() == "1"
+
+
 _database_url = os.getenv("DATABASE_URL", "").strip()
 if _database_url:
+    _ssl_default = "1" if _is_neon_url(_database_url) else os.getenv("DB_SSL_REQUIRE", "1")
+    _ssl_require = os.getenv("DB_SSL_REQUIRE", _ssl_default) == "1"
+    _use_pooler = _is_pgbouncer_url(_database_url)
+    # Neon pooler (PgBouncer) cannot keep persistent server-side connections.
+    _default_conn_max_age = "0" if _use_pooler else "60"
+    _conn_max_age = int(os.getenv("DB_CONN_MAX_AGE", _default_conn_max_age))
     DATABASES = {
         "default": dj_database_url.config(
             default=_database_url,
-            conn_max_age=600,
-            ssl_require=os.getenv("DB_SSL_REQUIRE", "1") == "1",
+            conn_max_age=_conn_max_age,
+            conn_health_checks=True,
+            ssl_require=_ssl_require,
         )
     }
+    if _use_pooler:
+        DATABASES["default"]["DISABLE_SERVER_SIDE_CURSORS"] = True
+    DATABASES["default"].setdefault("OPTIONS", {})
+    if _ssl_require:
+        DATABASES["default"]["OPTIONS"].setdefault("sslmode", "require")
 elif os.getenv("DB_ENGINE") == "postgresql":
     DATABASES = {
         "default": {
@@ -133,6 +157,9 @@ elif os.getenv("DB_ENGINE") == "postgresql":
             "PASSWORD": os.getenv("DB_PASSWORD", ""),
             "HOST": os.getenv("DB_HOST", "localhost"),
             "PORT": os.getenv("DB_PORT", "5432"),
+            "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),
+            "CONN_HEALTH_CHECKS": True,
+            "OPTIONS": {"sslmode": os.getenv("DB_SSLMODE", "prefer")},
         }
     }
 else:
@@ -242,3 +269,47 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = "DENY"
+
+
+# ---------------------------------------------------------------------------
+# Email
+# ---------------------------------------------------------------------------
+_email_backend = os.getenv("EMAIL_BACKEND", "").strip()
+if _email_backend:
+    EMAIL_BACKEND = _email_backend
+elif DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "1") == "1"
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "0") == "1"
+if EMAIL_USE_SSL:
+    EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "webmaster@localhost")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "orders.invoice": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}
+
+validate_production_settings(
+    debug=DEBUG,
+    secret_key=SECRET_KEY,
+    allowed_hosts=ALLOWED_HOSTS,
+) if "test" not in sys.argv else None

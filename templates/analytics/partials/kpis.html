@@ -1,0 +1,53 @@
+{% load i18n %}
+{% with r=report %}
+<div class="mb-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Chiffre d'affaires" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ r.revenue.current }}&nbsp;{{ r.currency }}</p>
+    <p class="mt-2 text-xs text-ink-soft">
+      {% trans "Précédent :" %} {{ r.revenue.previous }} {{ r.currency }}
+      {% if r.revenue.pct is not None %}
+        · <span class="{% if r.revenue.pct >= 0 %}text-ok{% else %}text-danger{% endif %}">{{ r.revenue.pct|floatformat:2 }} %</span>
+      {% endif %}
+    </p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Commandes" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ r.orders_total.current|floatformat:0 }}</p>
+    <p class="mt-2 text-xs text-ink-soft">
+      {% trans "Payées" %} {{ r.orders_paid.current|floatformat:0 }}
+      · {% trans "Annulées" %} {{ r.orders_cancelled.current|floatformat:0 }}
+      · {% trans "En cours" %} {{ r.orders_open }}
+    </p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Panier moyen" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ r.avg_ticket.current }}&nbsp;{{ r.currency }}</p>
+    <p class="mt-2 text-xs text-ink-soft">
+      {% trans "CA / commandes payées" %}
+      {% if r.avg_ticket.pct is not None %}
+        · {{ r.avg_ticket.pct|floatformat:2 }} %
+      {% endif %}
+    </p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Taux d'annulation" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ r.cancel_rate.current|floatformat:1 }}&nbsp;%</p>
+    <p class="mt-2 text-xs text-ink-soft">{% trans "Annulées / commandes de la période" %}</p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Remises" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ r.discount_approved_amount }}&nbsp;{{ r.currency }}</p>
+    <p class="mt-2 text-xs text-ink-soft">
+      {{ r.discount_count }} {% trans "demande(s)" %}
+      · {{ r.discount_approved_count }} {% trans "approuvées" %}
+      · {{ r.discount_rejected_count }} {% trans "refusées" %}
+    </p>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-5 sm:col-span-2">
+    <p class="text-xs font-medium uppercase tracking-wider text-ink-soft">{% trans "Commandes (pas de fichier client)" %}</p>
+    <p class="mt-2 font-display text-3xl font-bold tabular-nums">{{ r.orders_total.current|floatformat:0 }}</p>
+    <p class="mt-2 text-xs text-ink-soft">{% trans "L'application n'identifie pas de clients individuels." %}</p>
+  </div>
+</div>
+{% endwith %}

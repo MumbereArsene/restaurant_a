@@ -4,3 +4,5 @@
   {% include "orders/partials/dish_qty.html" with dish=dish cart=cart oob=True qty_prefix="qty-modal" %}
 {% endif %}
 {% include "orders/partials/cart_bar.html" with cart=cart oob=True %}
+{% include "orders/partials/nav_cart_link.html" with cart=cart oob=True badge_id="nav-cart-badge" link_class="" %}
+{% include "orders/partials/nav_cart_link.html" with cart=cart oob=True badge_id="nav-cart-badge-mobile" link_class="text-current" %}

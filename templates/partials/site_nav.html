@@ -30,20 +30,28 @@
           {% endfor %}
         </select>
       </form>
+      {% include "orders/partials/nav_cart_link.html" with badge_id="nav-cart-badge" link_class="" %}
+      {% if user.is_authenticated and user.is_client_role %}
+        <a href="{% url 'orders:client_invoices' %}" class="nav-underline">{% trans "Mes factures" %}</a>
+      {% else %}
+        <a href="{% url 'accounts:client_login' %}" class="nav-underline">{% trans "Compte" %}</a>
+      {% endif %}
       <a href="{% url 'menu:public' %}" class="btn-primary btn-sm">{% trans "Commander" %}</a>
     </nav>
 
-    {# Mobile hamburger #}
-    <button type="button"
-            class="hamburger lg:hidden {% if dark %}hamburger--light{% endif %}"
-            data-nav-toggle
-            aria-expanded="false"
-            aria-controls="mobile-nav"
-            aria-label="{% trans 'Ouvrir le menu' %}">
-      <span class="hamburger-box" aria-hidden="true">
-        <span class="hamburger-inner"></span>
-      </span>
-    </button>
+    <div class="flex items-center gap-2 lg:hidden {% if dark %}text-white{% else %}text-ink{% endif %}">
+      {% include "orders/partials/nav_cart_link.html" with badge_id="nav-cart-badge-mobile" link_class="text-current" %}
+      <button type="button"
+              class="hamburger {% if dark %}hamburger--light{% endif %}"
+              data-nav-toggle
+              aria-expanded="false"
+              aria-controls="mobile-nav"
+              aria-label="{% trans 'Ouvrir le menu' %}">
+        <span class="hamburger-box" aria-hidden="true">
+          <span class="hamburger-inner"></span>
+        </span>
+      </button>
+    </div>
   </div>
 </header>
 {# Reserve space so content is not hidden under the fixed header (home hero handles its own padding) #}
@@ -66,6 +74,12 @@
     <nav class="flex flex-col gap-1 px-3 py-4 text-base font-semibold text-white">
       <a href="{% url 'core:home' %}" class="mobile-nav__link" data-nav-close>{% trans "Accueil" %}</a>
       <a href="{% url 'menu:public' %}" class="mobile-nav__link" data-nav-close>{% trans "Menu" %}</a>
+      <a href="{% url 'orders:cart' %}" class="mobile-nav__link" data-nav-close>{% trans "Panier" %}</a>
+      {% if user.is_authenticated and user.is_client_role %}
+        <a href="{% url 'orders:client_invoices' %}" class="mobile-nav__link" data-nav-close>{% trans "Mes factures" %}</a>
+      {% else %}
+        <a href="{% url 'accounts:client_login' %}" class="mobile-nav__link" data-nav-close>{% trans "Compte" %}</a>
+      {% endif %}
       <a href="{% url 'reservations:create' %}" class="mobile-nav__link" data-nav-close>{% trans "Réserver" %}</a>
       <a href="{% url 'core:contact' %}" class="mobile-nav__link" data-nav-close>{% trans "Contact" %}</a>
       <a href="{% url 'core:legal' %}" class="mobile-nav__link text-white/55" data-nav-close>{% trans "Mentions légales" %}</a>

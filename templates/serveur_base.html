@@ -55,27 +55,21 @@
 
   <nav class="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink pb-[env(safe-area-inset-bottom)]">
     <div class="mx-auto flex max-w-lg items-stretch">
-      {% with view=request.resolver_match.view_name %}
-      <a href="{% url 'tables:serveur_home' %}"
-         class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider transition
-           {% if view == 'tables:serveur_home' or view == 'tables:free_scan' or view == 'tables:free_confirm' %}text-vermilion{% else %}text-white/45 hover:text-white{% endif %}">
-        <span class="font-display text-lg leading-none">◎</span>
-        {% trans "Libérer" %}
-      </a>
-      <a href="{% url 'orders:staff_list' %}"
-         class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider transition
-           {% if view == 'orders:staff_list' %}text-vermilion{% else %}text-white/45 hover:text-white{% endif %}">
+      <a href="{% url 'tables:serveur_home' %}#commandes" data-serveur-tab="commandes"
+         class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white/45 transition hover:text-white">
         <span class="font-display text-lg leading-none">☰</span>
         {% trans "Commandes" %}
       </a>
-      {% if user.is_admin_role %}
-        <a href="{% url 'core:dashboard' %}"
-           class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white/45 transition hover:text-white">
-          <span class="font-display text-lg leading-none">←</span>
-          {% trans "Admin" %}
-        </a>
-      {% endif %}
-      {% endwith %}
+      <a href="{% url 'tables:serveur_home' %}#scan" data-serveur-tab="scan"
+         class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white/45 transition hover:text-white">
+        <span class="font-display text-lg leading-none">◎</span>
+        {% trans "Libérer" %}
+      </a>
+      <a href="{% url 'tables:serveur_home' %}#salle" data-serveur-tab="salle"
+         class="flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-white/45 transition hover:text-white">
+        <span class="font-display text-lg leading-none">▢</span>
+        {% trans "Salle" %}
+      </a>
     </div>
   </nav>
 </body>

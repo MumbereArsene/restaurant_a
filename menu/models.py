@@ -64,3 +64,9 @@ class Dish(TranslatedNameMixin):
         if self.image:
             return self.image.url
         return self.image_url or ""
+
+    def save(self, *args, **kwargs):
+        from core.media_cleanup import delete_replaced_file
+
+        delete_replaced_file(self, "image")
+        return super().save(*args, **kwargs)

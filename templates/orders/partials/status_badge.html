@@ -1,0 +1,11 @@
+{% if order.status == "en_attente" %}
+  <span class="badge-wait">{{ order.staff_status_label }}</span>
+{% elif order.status == "acceptee" or order.status == "en_preparation" or order.status == "prete" %}
+  <span class="badge-prep">{{ order.staff_status_label }}</span>
+{% elif order.status == "servie" %}
+  <span class="badge-done">{{ order.staff_status_label }}</span>
+{% elif order.status == "payee" %}
+  <span class="badge-paid">{{ order.staff_status_label }}</span>
+{% else %}
+  <span class="badge-cancel">{{ order.staff_status_label }}</span>
+{% endif %}

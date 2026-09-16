@@ -31,9 +31,13 @@
           </td>
           <td>
             <div class="flex gap-1.5">
-              <a href="{% url 'accounts:personnel_update' pk=u.pk %}" class="btn-ghost btn-sm">{% trans "Modifier" %}</a>
-              {% if u != user %}
-                <a href="{% url 'accounts:personnel_delete' pk=u.pk %}" class="btn-danger btn-sm">{% trans "Supprimer" %}</a>
+              {% if user.is_admin_role or u.role == "caissier" or u.role == "serveur" or u.role == "cuisine" %}
+                <a href="{% url 'accounts:personnel_update' pk=u.pk %}" class="btn-ghost btn-sm">{% trans "Modifier" %}</a>
+                {% if u != user %}
+                  <a href="{% url 'accounts:personnel_delete' pk=u.pk %}" class="btn-danger btn-sm">{% trans "Supprimer" %}</a>
+                {% endif %}
+              {% else %}
+                <span class="text-xs text-ink-soft">—</span>
               {% endif %}
             </div>
           </td>

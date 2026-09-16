@@ -41,6 +41,9 @@
         </div>
         <button type="submit" class="btn-ink w-full">{% trans "Se connecter" %}</button>
       </form>
+      <p class="mt-4 text-center text-sm">
+        <a href="{% url 'accounts:password_reset' %}" class="text-ink-soft hover:text-ink hover:underline">{% trans "Mot de passe oublié ?" %}</a>
+      </p>
     </div>
   </div>
 </body>

@@ -78,6 +78,7 @@ def dashboard(request):
         "orders_pending_count": Order.objects.filter(
             status__in=[
                 Order.Status.EN_ATTENTE,
+                Order.Status.ACCEPTEE,
                 Order.Status.EN_PREPARATION,
                 Order.Status.PRETE,
             ]

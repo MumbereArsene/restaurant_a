@@ -44,7 +44,7 @@
                 {% csrf_token %}
                 <input type="hidden" name="dish_id" value="{{ dish.pk }}">
                 <input type="hidden" name="action" value="remove">
-                <button type="submit" class="text-xs font-medium text-danger hover:underline">{% trans "Retirer" %}</button>
+                <button type="submit" class="btn-danger btn-sm">{% trans "Retirer" %}</button>
               </form>
             </div>
           </div>
@@ -56,7 +56,7 @@
       <span class="text-sm uppercase tracking-wider text-white/60">{% trans "Total" %}</span>
       <span class="font-display text-2xl font-bold tabular-nums">{{ cart.total }} {{ CURRENCY }}</span>
     </div>
-    <p class="mt-3 text-sm text-ink-soft">{% trans "Paiement en espèces. Au clic suivant, scannez le QR de votre table." %}</p>
+    <p class="mt-3 text-sm text-ink-soft">{% trans "Indiquez WhatsApp, email ou un compte pour la facture, puis scannez le QR de votre table." %}</p>
 
     <a href="{% url 'orders:checkout_scan' %}" class="btn-primary mt-6 w-full py-3.5 text-base">
       {% trans "Commander — scanner la table" %}

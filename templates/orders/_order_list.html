@@ -14,42 +14,38 @@
     </thead>
     <tbody>
       {% for order in orders %}
-        <tr>
+        <tr class="cursor-pointer" onclick="if (!event.target.closest('form, a, button')) location.href='{% url 'orders:staff_detail' pk=order.pk %}'">
           <td><a class="font-semibold hover:text-vermilion" href="{% url 'orders:staff_detail' pk=order.pk %}">#{{ order.pk }}</a></td>
           <td>{{ order.table }}</td>
-          <td class="max-w-xs truncate text-ink-soft">
-            {% for item in order.items.all %}
-              {{ item.quantity }}× {{ item.dish.name_fr }}{% if not forloop.last %}, {% endif %}
-            {% endfor %}
+          <td class="max-w-xs">
+            <a href="{% url 'orders:staff_detail' pk=order.pk %}" class="block truncate text-ink-soft hover:text-ink">
+              {% for item in order.items.all %}
+                {{ item.quantity }}× {{ item.dish.name_fr }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </a>
           </td>
           <td class="tabular-nums font-medium">{{ order.total }} {{ CURRENCY }}</td>
-          <td>
-            {% if order.status == "en_attente" %}<span class="badge-wait"
-            {% elif order.status == "en_preparation" %}<span class="badge-prep"
-            {% elif order.status == "prete" %}<span class="badge-ready"
-            {% elif order.status == "servie" %}<span class="badge-done"
-            {% elif order.status == "payee" %}<span class="badge-paid"
-            {% else %}<span class="badge-cancel"
-            {% endif %}>{{ order.get_status_display }}</span>
-          </td>
+          <td>{% include "orders/partials/status_badge.html" %}</td>
           <td>{{ order.created_at|date:"d/m H:i" }}</td>
           <td>
             <div class="flex flex-wrap gap-1.5">
-              <a href="{% url 'orders:staff_ticket' pk=order.pk %}" class="btn-ghost btn-sm">{% trans "Ticket" %}</a>
-              {% if order.status == "en_attente" or order.status == "en_preparation" or order.status == "prete" %}
+              {% if order.status == "en_attente" %}
                 <form method="post" action="{% url 'orders:staff_advance' pk=order.pk %}">
                   {% csrf_token %}
-                  <button type="submit" class="btn-primary btn-sm">
-                    {% if order.status == "en_attente" %}{% trans "Préparer" %}
-                    {% elif order.status == "en_preparation" %}{% trans "Prête" %}
-                    {% else %}{% trans "Servir" %}{% endif %}
-                  </button>
+                  <button type="submit" class="btn-primary btn-sm">{% trans "Accepter" %}</button>
                 </form>
-              {% endif %}
-              {% if order.status == "prete" or order.status == "servie" %}
-                {% if user.can_encaisser %}
-                  <a href="{% url 'orders:staff_pay' pk=order.pk %}" class="btn-ink btn-sm">{% trans "Encaisser" %}</a>
+              {% elif order.is_accepted_like %}
+                <form method="post" action="{% url 'orders:staff_advance' pk=order.pk %}">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-primary btn-sm">{% trans "Servir" %}</button>
+                </form>
+              {% elif order.status == "servie" %}
+                <a href="{% url 'orders:staff_invoice' pk=order.pk %}" class="btn-ghost btn-sm">{% trans "Facture" %}</a>
+                {% if user.can_encaisser and not is_floor_serveur %}
+                  <a href="{% url 'orders:staff_pay' pk=order.pk %}" class="btn-ink btn-sm">{% trans "Facture réglée" %}</a>
                 {% endif %}
+              {% elif order.status == "payee" %}
+                <a href="{% url 'orders:staff_invoice' pk=order.pk %}" class="btn-ghost btn-sm">{% trans "Facture" %}</a>
               {% endif %}
               {% if order.discount_status == "pending" %}
                 <span class="badge-wait">{% trans "Remise ?" %}</span>

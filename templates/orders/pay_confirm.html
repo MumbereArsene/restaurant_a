@@ -1,16 +1,18 @@
-{% extends "staff_base.html" %}
+{% extends staff_chrome %}
 {% load i18n %}
 
 {% block title %}{% trans "Encaisser" %} #{{ order.pk }}{% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-md">
-  <a href="{% url 'orders:staff_detail' pk=order.pk %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour" %}</a>
+  <a href="{% if is_floor_serveur %}{% url 'tables:serveur_home' %}#scan{% else %}{% url 'orders:staff_detail' pk=order.pk %}{% endif %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour" %}</a>
 
   <div class="mt-4 rounded-2xl bg-ink p-6 text-white">
-    <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-vermilion">{% trans "Encaissement espèces" %}</p>
+    <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-vermilion">
+      {% if from_scan %}{% trans "QR facture scanné" %}{% else %}{% trans "Encaissement" %}{% endif %}
+    </p>
     <h1 class="mt-2 font-display text-3xl font-extrabold">{% trans "Commande" %} #{{ order.pk }}</h1>
-    <p class="mt-1 text-white/60">{% trans "Table" %} {{ order.table.number }} · {{ order.get_status_display }}</p>
+    <p class="mt-1 text-white/60">{% trans "Table" %} {{ order.table.number }} · {{ order.staff_status_label }}</p>
     <p class="mt-6 font-display text-5xl font-extrabold tabular-nums text-vermilion">
       {{ order.total }} <span class="text-2xl text-white/70">{{ CURRENCY }}</span>
     </p>
@@ -33,13 +35,32 @@
 
   <form method="post" action="{% url 'orders:staff_mark_paid' pk=order.pk %}" class="mt-6 space-y-3">
     {% csrf_token %}
-    <input type="hidden" name="next" value="{% url 'orders:staff_detail' pk=order.pk %}">
+    <input type="hidden" name="next" value="{% if is_floor_serveur %}{% url 'tables:serveur_home' %}{% else %}{% url 'orders:staff_detail' pk=order.pk %}{% endif %}">
+    {% if from_scan %}
+      <input type="hidden" name="from_scan" value="1">
+    {% endif %}
+
+    <fieldset class="rounded-2xl border border-line bg-white p-4">
+      <legend class="text-sm font-bold">{% trans "Moyen de paiement" %}</legend>
+      <div class="mt-3 grid gap-2 sm:grid-cols-2">
+        {% for value, label in payment_methods %}
+          <label class="flex cursor-pointer items-center gap-2.5 rounded-xl border-2 border-line bg-white px-3 py-2.5 has-[:checked]:border-vermilion has-[:checked]:bg-vermilion/5">
+            <input type="radio" name="payment_method" value="{{ value }}" class="h-4 w-4 accent-vermilion"
+                   {% if order.payment_method == value or forloop.first %}checked{% endif %}>
+            <span class="text-sm font-semibold">{{ label }}</span>
+          </label>
+        {% endfor %}
+      </div>
+      <p class="mt-2 text-xs text-ink-soft">
+        {% trans "Mobile Money : le serveur reçoit sur le numéro du restaurant ; seul l’espèces entre dans le tiroir." %}
+      </p>
+    </fieldset>
+
+    {% include "orders/partials/release_table_radios.html" with radio_name="release_table" checked_release=checked_release %}
+
     <button type="submit" class="btn-primary w-full py-3.5 text-base">
-      {% trans "Confirmer le paiement en espèces" %}
+      {% trans "Confirmer l’encaissement" %}
     </button>
   </form>
-  <p class="mt-3 text-center text-xs text-ink-soft">
-    {% trans "Une entrée de caisse sera créée automatiquement." %}
-  </p>
 </div>
 {% endblock %}

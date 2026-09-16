@@ -163,6 +163,30 @@
     @apply w-full;
   }
 
+  /* Panier header : icône large + badge type notification */
+  .nav-cart {
+    @apply relative inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full
+      transition-colors hover:bg-white/10;
+  }
+
+  .site-header:not(.site-header--dark) .nav-cart {
+    @apply hover:bg-ink/5;
+  }
+
+  .nav-cart__icon {
+    @apply h-8 w-8;
+  }
+
+  .nav-cart__badge {
+    @apply pointer-events-none absolute -right-1 -top-1 flex h-[1.35rem] min-w-[1.35rem]
+      items-center justify-center rounded-full bg-vermilion px-1 text-[11px] font-extrabold
+      leading-none text-ink ring-2 ring-paper;
+  }
+
+  .site-header--dark .nav-cart__badge {
+    @apply ring-ink;
+  }
+
   .chip {
     @apply shrink-0 rounded-full border border-line bg-white px-3.5 py-1.5 text-xs font-bold
       text-ink transition hover:border-ink hover:bg-ink hover:text-white;

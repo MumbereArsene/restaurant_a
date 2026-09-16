@@ -19,6 +19,14 @@
               class="flex h-8 w-8 items-center justify-center rounded-full bg-vermilion text-sm font-extrabold text-ink transition hover:bg-vermilion-dark active:scale-95"
               aria-label="{% trans 'Ajouter' %}">+</button>
     </form>
+    <form hx-post="{% url 'orders:cart_update' %}" hx-target="#cart-live" hx-swap="none" class="contents">
+      {% csrf_token %}
+      <input type="hidden" name="dish_id" value="{{ dish.pk }}">
+      <input type="hidden" name="action" value="remove">
+      <button type="submit"
+              class="ml-1 text-xs font-bold text-danger hover:underline"
+              aria-label="{% trans 'Retirer du panier' %}">{% trans "Retirer" %}</button>
+    </form>
   {% else %}
     <form hx-post="{% url 'orders:cart_add' %}" hx-target="#cart-live" hx-swap="none" class="contents">
       {% csrf_token %}

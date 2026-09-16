@@ -8,7 +8,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential libpq-dev curl \
+    build-essential libpq-dev curl gettext \
     && rm -rf /var/lib/apt/lists/*
 
 # Node for Tailwind build
@@ -24,6 +24,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 RUN npm run build:css \
+    && python manage.py compilemessages --ignore env --ignore venv \
     && chmod +x bin/start.sh
 
 EXPOSE 8000

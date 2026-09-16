@@ -58,6 +58,10 @@ class Restaurant(models.Model):
         verbose_name = _("restaurant")
 
     def save(self, *args, **kwargs):
+        from core.media_cleanup import delete_replaced_file
+
+        delete_replaced_file(self, "logo")
+        delete_replaced_file(self, "cover_image")
         self.pk = 1  # enforce singleton
         super().save(*args, **kwargs)
 

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Créer un compte" %} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-sm px-5 py-12">
+  <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-vermilion">{% trans "Client" %}</p>
+  <h1 class="mt-2 font-display text-3xl font-bold tracking-tight">{% trans "Créer un compte" %}</h1>
+  <p class="mt-2 text-sm text-ink-soft">{% trans "Vos factures seront ici, en attente de règlement ou déjà payées." %}</p>
+
+  {% if form.non_field_errors %}
+    <p class="mt-4 rounded-xl border border-danger/30 bg-red-50 px-3 py-2 text-sm text-danger">{{ form.non_field_errors|striptags }}</p>
+  {% endif %}
+
+  <form method="post" class="mt-8 space-y-4">
+    {% csrf_token %}
+    {% for field in form %}
+      <div>
+        <label class="label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<p class="mt-1 text-xs text-danger">{{ field.errors|striptags }}</p>{% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn-primary w-full">{% trans "Créer mon compte" %}</button>
+  </form>
+  <p class="mt-6 text-center text-sm text-ink-soft">
+    {% trans "Déjà inscrit ?" %}
+    <a href="{% url 'accounts:client_login' %}" class="font-semibold text-vermilion hover:underline">{% trans "Connexion" %}</a>
+  </p>
+</section>
+{% endblock %}

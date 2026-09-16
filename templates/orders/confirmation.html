@@ -14,7 +14,13 @@
     {% blocktrans with id=order.pk %}N°{{ id }} — transmise en cuisine.{% endblocktrans %}
   </p>
   <p class="reveal reveal-delay-2 mt-6 font-display text-3xl font-bold tabular-nums">{{ order.total }} {{ CURRENCY }}</p>
-  <p class="mt-2 text-xs text-ink-soft">{% trans "Paiement en espèces auprès du serveur." %}</p>
-  <a href="{% url 'menu:public' %}" class="btn-ink mt-10">{% trans "Commander encore" %}</a>
+  <p class="mt-4 max-w-sm text-sm text-ink-soft">
+    {% trans "La facture vous sera envoyée dès que le plat sera servi (WhatsApp, email ou votre compte)." %}
+  </p>
+  {% if user.is_authenticated and user.is_client_role %}
+    <a href="{% url 'orders:client_invoices' %}" class="btn-ink mt-10">{% trans "Voir mes factures" %}</a>
+  {% else %}
+    <a href="{% url 'menu:public' %}" class="btn-ink mt-10">{% trans "Commander encore" %}</a>
+  {% endif %}
 </section>
 {% endblock %}

@@ -23,6 +23,10 @@ class Reservation(models.Model):
     class Meta:
         ordering = ["-date", "-time"]
         verbose_name = _("réservation")
+        indexes = [
+            models.Index(fields=["date"], name="reservatio_date_7c1a2b_idx"),
+            models.Index(fields=["status"], name="reservatio_status_3e9d4c_idx"),
+        ]
 
     def __str__(self) -> str:
         return f"{self.name} — {self.date} {self.time} ({self.guests}p)"

@@ -1,0 +1,152 @@
+{% extends "staff_base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Analyse" %} — {{ restaurant.name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink-soft">{% trans "Décision" %}</p>
+  <h1 class="mt-1 font-display text-3xl font-bold tracking-tight">{% trans "Analyse" %}</h1>
+</div>
+
+<form method="get"
+      hx-get="{% url 'analytics:dashboard' %}"
+      hx-target="#analytics-body"
+      hx-swap="innerHTML"
+      hx-push-url="true"
+      class="mb-8 space-y-4">
+  <div class="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    {% for key, label in presets %}
+      <button type="submit" name="period" value="{{ key }}"
+              class="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium
+                {% if period.preset == key %}bg-ink text-white{% else %}border border-line bg-white text-ink hover:border-ink{% endif %}">
+        {{ label }}
+      </button>
+    {% endfor %}
+  </div>
+
+  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+    <div class="sm:col-span-2 lg:col-span-2">
+      <label class="label" for="id_from">{% trans "Du" %}</label>
+      <input type="date" id="id_from" name="from" value="{{ request.GET.from|default:period.start_date|date:'Y-m-d' }}" class="field">
+    </div>
+    <div class="sm:col-span-2 lg:col-span-2">
+      <label class="label" for="id_to">{% trans "Au" %}</label>
+      <input type="date" id="id_to" name="to" value="{{ request.GET.to|default:period.end_date|date:'Y-m-d' }}" class="field">
+    </div>
+    <div>
+      <label class="label" for="id_category">{% trans "Catégorie" %}</label>
+      <select id="id_category" name="category" class="field">
+        <option value="">{% trans "Toutes" %}</option>
+        {% for cat in categories %}
+          <option value="{{ cat.pk }}" {% if filters.category_id == cat.pk %}selected{% endif %}>{{ cat.name_fr }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="id_dish">{% trans "Plat" %}</label>
+      <select id="id_dish" name="dish" class="field">
+        <option value="">{% trans "Tous" %}</option>
+        {% for dish in dishes %}
+          <option value="{{ dish.pk }}" {% if filters.dish_id == dish.pk %}selected{% endif %}>{{ dish.name_fr }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="id_table">{% trans "Table" %}</label>
+      <select id="id_table" name="table" class="field">
+        <option value="">{% trans "Toutes" %}</option>
+        {% for table in tables %}
+          <option value="{{ table.pk }}" {% if filters.table_id == table.pk %}selected{% endif %}>{{ table.number }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="label" for="id_status">{% trans "Statut" %}</label>
+      <select id="id_status" name="status" class="field">
+        <option value="">{% trans "Tous" %}</option>
+        {% for value, label in order_statuses %}
+          <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button type="submit" name="period" value="custom" class="btn-primary btn-sm w-full">{% trans "Appliquer" %}</button>
+    </div>
+  </div>
+</form>
+
+<div id="analytics-body">
+  {% include "analytics/partials/body.html" %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.__analyticsCharts = [];
+
+  function destroyAnalyticsCharts() {
+    (window.__analyticsCharts || []).forEach((c) => { try { c.destroy(); } catch (e) {} });
+    window.__analyticsCharts = [];
+  }
+
+  function renderAnalyticsCharts() {
+    if (!window.Chart) return;
+    const node = document.getElementById("analytics-chart-data");
+    if (!node) return;
+    const data = JSON.parse(node.textContent);
+    destroyAnalyticsCharts();
+
+    const ink = "#0A0A0A";
+    const vermilion = "#FF5A00";
+    const soft = "#71717A";
+
+    function make(id, config) {
+      const canvas = document.getElementById(id);
+      if (!canvas) return;
+      window.__analyticsCharts.push(new Chart(canvas, config));
+    }
+
+    make("chart-revenue", {
+      type: "line",
+      data: {
+        labels: data.revenueLabels.length ? data.revenueLabels : data.revenuePrevLabels,
+        datasets: [
+          { label: data.revenueLabel, data: data.revenueCurrent, borderColor: vermilion, backgroundColor: "rgba(255,90,0,0.12)", tension: 0.3, fill: true },
+          { label: data.previousLabel, data: data.revenuePrev, borderColor: ink, borderDash: [5, 4], tension: 0.3, fill: false },
+        ],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: soft } } }, scales: { x: { ticks: { color: soft, maxRotation: 45 } }, y: { ticks: { color: soft } } } },
+    });
+
+    make("chart-status", {
+      type: "doughnut",
+      data: { labels: data.statusLabels, datasets: [{ data: data.statusValues, backgroundColor: ["#fdba74", ink, "#fde68a", "#86efac", ink, "#fecaca"] }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { color: soft, boxWidth: 12 } } } },
+    });
+
+    make("chart-hourly", {
+      type: "bar",
+      data: { labels: data.hourlyLabels, datasets: [{ label: data.ordersLabel, data: data.hourlyValues, backgroundColor: vermilion }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: soft, maxRotation: 0, autoSkip: true } }, y: { ticks: { color: soft }, beginAtZero: true } } },
+    });
+
+    make("chart-dishes", {
+      type: "bar",
+      data: { labels: data.dishLabels, datasets: [{ label: data.revenueLabel, data: data.dishValues, backgroundColor: vermilion }] },
+      options: { indexAxis: "y", responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: soft } }, y: { ticks: { color: ink } } } },
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", renderAnalyticsCharts);
+  document.body.addEventListener("htmx:afterSwap", (e) => {
+    if (e.detail.target && e.detail.target.id === "analytics-body") {
+      renderAnalyticsCharts();
+    }
+  });
+</script>
+{% endblock %}

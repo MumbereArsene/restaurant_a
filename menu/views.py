@@ -1,5 +1,7 @@
+from decimal import Decimal, InvalidOperation as DecimalError
+
 from django.contrib import messages
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.translation import gettext as _
 
@@ -11,15 +13,61 @@ from .models import Category, Dish
 
 
 def public_menu(request):
-    """Public menu: browse, add to cart, then Commander → scan table QR."""
-    categories = Category.objects.filter(is_active=True).prefetch_related(
-        Prefetch("dishes", queryset=Dish.objects.filter(is_active=True))
-    )
+    """Public menu: search + filters, then add to cart and Commander → scan QR."""
+    q = (request.GET.get("q") or "").strip()
+    cat_raw = request.GET.get("cat") or ""
+    max_raw = (request.GET.get("max") or "").strip().replace(",", ".")
+    sort = request.GET.get("sort") or ""
+
+    max_price = None
+    if max_raw:
+        try:
+            max_price = Decimal(max_raw)
+        except (DecimalError, ValueError):
+            max_price = None
+        if max_price is not None and max_price < 0:
+            max_price = None
+
+    dishes = Dish.objects.filter(is_active=True)
+    if q:
+        dishes = dishes.filter(
+            Q(name_fr__icontains=q)
+            | Q(name_en__icontains=q)
+            | Q(description_fr__icontains=q)
+            | Q(description_en__icontains=q)
+        )
+    if max_price is not None:
+        dishes = dishes.filter(price__lte=max_price)
+    if sort == "price_asc":
+        dishes = dishes.order_by("price", "name_fr")
+    elif sort == "price_desc":
+        dishes = dishes.order_by("-price", "name_fr")
+    else:
+        dishes = dishes.order_by("name_fr")
+
+    categories = Category.objects.filter(is_active=True)
+    if cat_raw.isdigit():
+        categories = categories.filter(pk=int(cat_raw))
+    categories = categories.prefetch_related(Prefetch("dishes", queryset=dishes))
+
     cart = Cart(request)
+    filters = {
+        "q": q,
+        "cat": cat_raw if cat_raw.isdigit() else "",
+        "max": max_raw,
+        "sort": sort,
+    }
     return render(
         request,
         "menu/public_menu.html",
-        {"categories": categories, "cart": cart},
+        {
+            "categories": categories,
+            "all_categories": Category.objects.filter(is_active=True),
+            "cart": cart,
+            "filters": filters,
+            "result_count": dishes.count(),
+            "has_filters": bool(q or filters["cat"] or filters["max"] or sort),
+        },
     )
 
 

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -11,7 +12,12 @@ class CashEntry(models.Model):
         OUT = "out", _("Sortie")
 
     type = models.CharField(_("type"), max_length=3, choices=Type.choices)
-    amount = models.DecimalField(_("montant"), max_digits=12, decimal_places=2)
+    amount = models.DecimalField(
+        _("montant"),
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
     reason = models.CharField(_("motif"), max_length=255)
     order = models.OneToOneField(
         "orders.Order",
@@ -33,6 +39,16 @@ class CashEntry(models.Model):
         ordering = ["-created_at"]
         verbose_name = _("mouvement de caisse")
         verbose_name_plural = _("mouvements de caisse")
+        indexes = [
+            models.Index(fields=["created_at"], name="cash_cashen_created_b2a91e_idx"),
+            models.Index(fields=["type"], name="cash_cashen_type_6d4c0a_idx"),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0),
+                name="cash_entry_amount_gte_0",
+            ),
+        ]
 
     def __str__(self) -> str:
         sign = "+" if self.type == self.Type.IN else "-"

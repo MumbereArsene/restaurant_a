@@ -92,7 +92,7 @@
           <td><a class="font-semibold hover:text-vermilion" href="{% url 'orders:staff_detail' pk=order.pk %}">#{{ order.pk }}</a></td>
           <td>{{ order.table }}</td>
           <td>
-            {% if order.status == "en_attente" %}<span class="badge-wait">{% elif order.status == "en_preparation" %}<span class="badge-prep">{% elif order.status == "servie" %}<span class="badge-done">{% elif order.status == "payee" %}<span class="badge-paid">{% else %}<span class="badge-cancel">{% endif %}{{ order.get_status_display }}</span>
+            {% include "orders/partials/status_badge.html" %}
           </td>
           <td class="tabular-nums">{{ order.total }} {{ CURRENCY }}</td>
           <td>{{ order.created_at|date:"H:i" }}</td>

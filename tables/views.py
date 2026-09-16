@@ -136,19 +136,31 @@ def _extract_table_token(raw: str) -> str:
 
 @serveur_or_admin
 def serveur_home(request):
-    """Espace serveur: scan QR + board to free occupied tables."""
+    """Floor hub: live orders, invoice scan, room board."""
+    from orders.models import Order
+
     tables = list(Table.objects.all())
     busy_count = sum(1 for t in tables if t.status == Table.Status.OCCUPEE)
     free_count = len(tables) - busy_count
-    return render(
-        request,
-        "tables/serveur_home.html",
-        {
-            "tables": tables,
-            "busy_count": busy_count,
-            "free_count": free_count,
-        },
+    open_qs = Order.objects.filter(
+        status__in=[
+            Order.Status.EN_ATTENTE,
+            Order.Status.ACCEPTEE,
+            Order.Status.EN_PREPARATION,
+            Order.Status.PRETE,
+            Order.Status.SERVIE,
+        ]
     )
+    context = {
+        "tables": tables,
+        "busy_count": busy_count,
+        "free_count": free_count,
+        "orders": open_qs.select_related("table", "customer").prefetch_related("items__dish")[:50],
+        "open_count": open_qs.count(),
+    }
+    if request.headers.get("HX-Request"):
+        return render(request, "orders/partials/serveur_order_list.html", context)
+    return render(request, "tables/serveur_home.html", context)
 
 
 @serveur_or_admin
@@ -179,6 +191,16 @@ def table_free_by_token(request):
         return redirect("tables:serveur_home")
 
     was_busy = table.status == Table.Status.OCCUPEE
+    if table.has_open_orders():
+        msg = _(
+            "Des commandes sont encore en cours sur la table %(n)s. "
+            "Annulez-les ou encaissez-les avant de libérer."
+        ) % {"n": table.number}
+        if wants_json:
+            return JsonResponse({"ok": False, "error": msg}, status=400)
+        messages.error(request, msg)
+        return redirect("tables:serveur_home")
+
     table.status = Table.Status.LIBRE
     table.save(update_fields=["status"])
 
@@ -224,6 +246,19 @@ def table_free_by_pk(request, pk):
     from core.audit import log_action
 
     table = get_object_or_404(Table, pk=pk)
+    if table.has_open_orders():
+        messages.error(
+            request,
+            _(
+                "Des commandes sont encore en cours sur la table %(n)s. "
+                "Annulez-les ou encaissez-les avant de libérer."
+            )
+            % {"n": table.number},
+        )
+        next_url = request.POST.get("next") or "tables:serveur_home"
+        if next_url.startswith("/"):
+            return redirect(next_url)
+        return redirect("tables:serveur_home")
     table.status = Table.Status.LIBRE
     table.save(update_fields=["status"])
     log_action(

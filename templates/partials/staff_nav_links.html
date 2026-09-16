@@ -7,17 +7,28 @@
     {% trans "Tableau de bord" %}
   </a>
 {% endif %}
+{% if user.can_view_analytics %}
+  <a href="{% url 'analytics:dashboard' %}"
+     {% if mobile %}data-nav-close{% endif %}
+     class="rounded-xl px-3 py-2.5 text-sm transition {% if ns == 'analytics' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
+    {% trans "Analyse" %}
+  </a>
+{% endif %}
+{% if not is_floor_serveur %}
 <a href="{% url 'orders:staff_list' %}"
    {% if mobile %}data-nav-close{% endif %}
    class="rounded-xl px-3 py-2.5 text-sm transition {% if ns == 'orders' %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
   {% trans "Commandes" %}
 </a>
+{% endif %}
 {% if user.can_free_tables %}
+  {% if not is_floor_serveur %}
   <a href="{% url 'tables:list' %}"
      {% if mobile %}data-nav-close{% endif %}
      class="rounded-xl px-3 py-2.5 text-sm transition {% if ns == 'tables' and 'serveur' not in request.path and 'liberer' not in request.path %}bg-white/15 text-white{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">
     {% trans "Tables" %}
   </a>
+  {% endif %}
   <a href="{% url 'tables:serveur_home' %}"
      {% if mobile %}data-nav-close{% endif %}
      class="rounded-xl px-3 py-2.5 text-sm transition {% if 'serveur' in request.path or 'liberer' in request.path %}bg-vermilion/90 font-bold text-ink{% else %}text-white/65 hover:bg-white/10 hover:text-white{% endif %}">

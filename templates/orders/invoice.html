@@ -1,0 +1,83 @@
+{% extends staff_chrome %}
+{% load i18n %}
+
+{% block title %}{% trans "Facture" %} #{{ order.pk }}{% endblock %}
+
+{% block extra_head %}
+<style>
+  @media print {
+    body { background: white !important; }
+    .staff-rail-hide, aside, .no-print { display: none !important; }
+    main, .min-w-0 { padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="no-print mb-4 flex flex-wrap items-center justify-between gap-2">
+  <a href="{% url 'orders:staff_detail' pk=order.pk %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour" %}</a>
+  <div class="flex flex-wrap gap-2">
+    {% if order.status == "servie" and user.can_encaisser and not is_floor_serveur %}
+      <a href="{% url 'orders:staff_pay' pk=order.pk %}" class="btn-ink btn-sm">{% trans "Facture réglée" %}</a>
+    {% endif %}
+    <button type="button" onclick="window.print()" class="btn-primary btn-sm">{% trans "Imprimer" %}</button>
+  </div>
+</div>
+
+<div class="mx-auto max-w-sm rounded-2xl border border-line bg-white p-6 print:border-0 print:p-0">
+  <p class="text-center text-[11px] font-bold uppercase tracking-[0.22em] text-ink-soft">{{ restaurant.name }}</p>
+  <h1 class="mt-1 text-center font-display text-2xl font-extrabold">{% trans "Facture" %}</h1>
+  <p class="mt-1 text-center text-sm text-ink-soft">
+    #{{ order.pk }} · {% trans "Table" %} {{ order.table.number }}
+  </p>
+  <p class="text-center text-xs text-ink-soft">{{ order.created_at|date:"d/m/Y H:i" }}</p>
+
+  <ul class="mt-6 space-y-2 border-t border-dashed border-line pt-4">
+    {% for item in order.items.all %}
+      <li class="flex items-start justify-between gap-3 text-sm">
+        <span>{{ item.quantity }}× {{ item.dish.name_fr }}</span>
+        <span class="tabular-nums font-medium">{{ item.subtotal }} {{ CURRENCY }}</span>
+      </li>
+    {% endfor %}
+    {% if order.discount_status == "approved" and order.discount_amount %}
+      <li class="flex justify-between border-t border-line pt-2 text-sm text-vermilion">
+        <span>{% trans "Remise" %}{% if order.discount_reason %} — {{ order.discount_reason }}{% endif %}</span>
+        <span class="tabular-nums font-medium">−{{ order.discount_amount }} {{ CURRENCY }}</span>
+      </li>
+    {% endif %}
+  </ul>
+
+  <p class="mt-4 flex items-end justify-between border-t border-ink pt-3">
+    <span class="text-sm font-bold uppercase tracking-wider">{% trans "Total" %}</span>
+    <span class="font-display text-3xl font-extrabold tabular-nums">{{ order.total }} {{ CURRENCY }}</span>
+  </p>
+
+  {% if order.status == "payee" %}
+    <p class="mt-3 text-center text-sm">
+      {% trans "Réglée par" %} <span class="font-bold">{{ order.get_payment_method_display }}</span>
+      {% if order.paid_at %} · {{ order.paid_at|date:"d/m/Y H:i" }}{% endif %}
+    </p>
+  {% endif %}
+
+  <div class="mt-6 flex flex-col items-center">
+    <img src="{% url 'orders:invoice_qr_png' token=order.invoice_token %}"
+         alt="{% trans 'QR encaissement' %}"
+         class="h-40 w-40"
+         width="160" height="160">
+    <p class="mt-2 text-center text-[11px] leading-snug text-ink-soft">
+      {% trans "Serveur : scannez ce QR (facture), pas le QR de la table." %}
+    </p>
+    <p class="mt-1 text-center text-[10px] text-ink-soft">
+      {% trans "Table" %} {{ order.table.number }} · {% trans "Commande" %} #{{ order.pk }}
+    </p>
+    {% if order.contact_email %}
+      <p class="mt-2 text-center text-xs text-ink-soft">{% trans "Email :" %} {{ order.contact_email }}</p>
+    {% endif %}
+    {% if whatsapp_url %}
+      <a href="{{ whatsapp_url }}" target="_blank" rel="noopener" class="btn-ghost btn-sm no-print mt-3">
+        {% trans "Envoyer par WhatsApp" %}
+      </a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

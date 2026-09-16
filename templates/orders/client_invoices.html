@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Mes factures" %} — {{ restaurant.name }}{% endblock %}
+
+{% block content %}
+<section class="mx-auto max-w-2xl px-5 py-12 md:px-8">
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-vermilion">{% trans "Mon compte" %}</p>
+      <h1 class="mt-1 font-display text-3xl font-bold tracking-tight">{% trans "Mes factures" %}</h1>
+    </div>
+    <form method="post" action="{% url 'accounts:client_logout' %}">
+      {% csrf_token %}
+      <button type="submit" class="text-sm font-medium text-ink-soft hover:text-ink">{% trans "Déconnexion" %}</button>
+    </form>
+  </div>
+
+  <ul class="space-y-3">
+    {% for order in orders %}
+      <li>
+        <a href="{% url 'orders:public_invoice' token=order.invoice_token %}"
+           class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-white p-4 transition hover:border-ink">
+          <div class="min-w-0">
+            <p class="font-display text-lg font-extrabold">#{{ order.pk }} · {% trans "Table" %} {{ order.table.number }}</p>
+            <p class="mt-0.5 truncate text-sm text-ink-soft">{{ order.created_at|date:"d/m/Y H:i" }}</p>
+          </div>
+          <div class="text-right">
+            <p class="font-display text-xl font-extrabold tabular-nums">{{ order.total }} {{ CURRENCY }}</p>
+            <p class="mt-1">{% include "orders/partials/status_badge.html" %}</p>
+          </div>
+        </a>
+      </li>
+    {% empty %}
+      <li class="rounded-2xl border border-dashed border-line px-6 py-14 text-center">
+        <p class="font-display text-lg font-bold">{% trans "Aucune facture pour le moment." %}</p>
+        <a href="{% url 'menu:public' %}" class="btn-ink mt-5 inline-flex">{% trans "Commander" %}</a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

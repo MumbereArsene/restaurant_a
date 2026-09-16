@@ -30,6 +30,31 @@ class Table(models.Model):
         ordering = ["number"]
         verbose_name = _("table")
 
+    def occupy(self):
+        if self.status != self.Status.OCCUPEE:
+            self.status = self.Status.OCCUPEE
+            self.save(update_fields=["status"])
+
+    def release_if_idle(self) -> bool:
+        """Set LIBRE when no open (unpaid, non-cancelled) orders remain.
+
+        Does not override a table kept occupied after payment.
+        Returns True if the table is (now) free.
+        """
+        from orders.models import Order
+
+        if self.orders.filter(status__in=Order.OPEN_STATUSES).exists():
+            return False
+        if self.status != self.Status.LIBRE:
+            self.status = self.Status.LIBRE
+            self.save(update_fields=["status"])
+        return True
+
+    def has_open_orders(self) -> bool:
+        from orders.models import Order
+
+        return self.orders.filter(status__in=Order.OPEN_STATUSES).exists()
+
     def regenerate_token(self):
         """Invalidate the old QR code (e.g. if reprinted or compromised)."""
         self.qr_token = _new_token()

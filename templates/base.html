@@ -21,7 +21,7 @@
   </script>
   {% block extra_head %}{% endblock %}
 </head>
-<body class="min-h-screen {% block body_class %}{% endblock %}" style="{% if restaurant %}{{ restaurant.theme_css }}{% endif %}">
+<body class="min-h-screen {% if cart and cart.count %}pb-24{% endif %} {% block body_class %}{% endblock %}" style="{% if restaurant %}{{ restaurant.theme_css }}{% endif %}">
   {% block header %}
     {% include "partials/site_nav.html" %}
   {% endblock %}
@@ -87,6 +87,8 @@
     </div>
   </footer>
   {% endblock %}
+
+  {% include "orders/partials/cart_bar.html" %}
 
   <script src="{% static 'js/site-nav.js' %}" defer></script>
   {% block extra_js %}{% endblock %}

@@ -1,0 +1,266 @@
+{% load i18n %}
+<script id="analytics-chart-data" type="application/json">{{ chart_json|safe }}</script>
+
+<div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+  <p class="text-sm text-ink-soft">{{ period.label }} · {{ period.start_date|date:"d/m/Y" }} – {{ period.end_date|date:"d/m/Y" }}</p>
+  <div class="flex flex-wrap gap-2">
+    <a href="{% url 'analytics:export_xlsx' %}?{{ export_query }}" class="btn-ghost btn-sm">{% trans "Excel" %}</a>
+    <a href="{% url 'analytics:export_pdf' %}?{{ export_query }}" class="btn-ink btn-sm">{% trans "PDF" %}</a>
+  </div>
+</div>
+
+{% include "analytics/partials/kpis.html" %}
+
+{% if report.insights %}
+<section class="mb-10">
+  <h2 class="mb-3 font-display text-xl font-bold">{% trans "Analyse intelligente" %}</h2>
+  <ul class="space-y-2">
+    {% for line in report.insights %}
+      <li class="rounded-xl border border-line bg-white px-4 py-3 text-sm leading-relaxed">{{ line }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<section class="mb-10 grid gap-4 lg:grid-cols-2">
+  <div class="rounded-lg border border-line bg-white p-4">
+    <h3 class="mb-3 font-display text-lg font-bold">{% trans "Chiffre d'affaires" %}</h3>
+    <div class="relative h-64"><canvas id="chart-revenue"></canvas></div>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-4">
+    <h3 class="mb-3 font-display text-lg font-bold">{% trans "Répartition des statuts" %}</h3>
+    <div class="relative h-64"><canvas id="chart-status"></canvas></div>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-4">
+    <h3 class="mb-3 font-display text-lg font-bold">{% trans "Commandes par heure" %}</h3>
+    <div class="relative h-64"><canvas id="chart-hourly"></canvas></div>
+  </div>
+  <div class="rounded-lg border border-line bg-white p-4">
+    <h3 class="mb-3 font-display text-lg font-bold">{% trans "Top 5 plats (CA)" %}</h3>
+    <div class="relative h-64"><canvas id="chart-dishes"></canvas></div>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="mb-3 font-display text-xl font-bold">{% trans "Plats les plus vendus" %}</h2>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{% trans "Plat" %}</th>
+          <th class="text-right">{% trans "Quantité" %}</th>
+          <th class="text-right">{% trans "CA" %}</th>
+          <th class="text-right">{% trans "% des ventes" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report.top_dishes %}
+          <tr>
+            <td>{{ row.name }}</td>
+            <td class="tabular-nums text-right">{{ row.quantity }}</td>
+            <td class="tabular-nums text-right">{{ row.revenue }} {{ report.currency }}</td>
+            <td class="tabular-nums text-right">{% if row.share_pct is not None %}{{ row.share_pct|floatformat:1 }} %{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-ink-soft">{% trans "Aucune vente payée sur cette période." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="mb-3 font-display text-xl font-bold">{% trans "Plats les moins vendus" %}</h2>
+  <p class="mb-3 text-sm text-ink-soft">{% trans "Utile pour une promotion, un ajustement de prix ou un retrait du menu." %}</p>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{% trans "Plat" %}</th>
+          <th class="text-right">{% trans "Quantité" %}</th>
+          <th class="text-right">{% trans "CA" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report.bottom_dishes %}
+          <tr>
+            <td>{{ row.name }}</td>
+            <td class="tabular-nums text-right">{{ row.quantity }}</td>
+            <td class="tabular-nums text-right">{{ row.revenue }} {{ report.currency }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="text-ink-soft">{% trans "Aucun plat à comparer." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="mb-3 font-display text-xl font-bold">{% trans "Performance par catégorie" %}</h2>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{% trans "Catégorie" %}</th>
+          <th class="text-right">{% trans "Ventes" %}</th>
+          <th class="text-right">{% trans "CA" %}</th>
+          <th class="text-right">{% trans "% du CA" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report.categories %}
+          <tr>
+            <td>{{ row.name }}</td>
+            <td class="tabular-nums text-right">{{ row.quantity }}</td>
+            <td class="tabular-nums text-right">{{ row.revenue }} {{ report.currency }}</td>
+            <td class="tabular-nums text-right">{% if row.share_pct is not None %}{{ row.share_pct|floatformat:1 }} %{% else %}—{% endif %}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-ink-soft">{% trans "Aucune vente par catégorie." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="mb-3 font-display text-xl font-bold">{% trans "Tables" %}</h2>
+  <p class="mb-3 text-sm text-ink-soft">
+    {% trans "Taux d'occupation historique indisponible : seul le statut actuel des tables est enregistré." %}
+    · {% trans "Tables au total :" %} {{ report.table_count }}
+  </p>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{% trans "Table" %}</th>
+          <th class="text-right">{% trans "Commandes" %}</th>
+          <th class="text-right">{% trans "CA" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report.tables %}
+          <tr>
+            <td>{{ row.number }}</td>
+            <td class="tabular-nums text-right">{{ row.orders }}</td>
+            <td class="tabular-nums text-right">{{ row.revenue }} {{ report.currency }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="text-ink-soft">{% trans "Aucune commande sur cette période." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="mb-3 font-display text-xl font-bold">{% trans "Réservations" %}</h2>
+  <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Total" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.reservations.total }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Confirmées" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.reservations.confirmed }}</p>
+      <p class="mt-1 text-xs text-ink-soft">{% if report.reservations.confirm_rate is not None %}{{ report.reservations.confirm_rate|floatformat:1 }} %{% endif %}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "En attente" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.reservations.pending }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Refusées / annulées" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.reservations.refused }} / {{ report.reservations.cancelled }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Personnes" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.reservations.guests }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="mb-3 font-display text-xl font-bold">{% trans "Caisse" %}</h2>
+  <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Entrées" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.cash.total_in }} {{ report.currency }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Dont commandes" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.cash.order_in }} {{ report.currency }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Entrées manuelles" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.cash.manual_in }} {{ report.currency }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Sorties" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.cash.total_out }} {{ report.currency }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Solde" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.cash.balance }} {{ report.currency }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Clôtures" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.cash.closures }}</p>
+      <p class="mt-1 text-xs text-ink-soft">{% trans "Écarts :" %} {{ report.cash.closure_gap_sum }} {{ report.currency }}</p>
+    </div>
+    <div class="rounded-lg border bg-white p-4 {% if report.cash.vs_revenue_gap %}border-vermilion/40{% else %}border-line{% endif %} sm:col-span-2">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "CA payé vs encaissements commandes" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.cash.vs_revenue_gap }} {{ report.currency }}</p>
+      {% if report.cash.vs_revenue_gap %}
+        <p class="mt-1 text-xs text-vermilion">{% trans "Écart à vérifier — Analytics ne modifie pas la caisse." %}</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="mb-10">
+  <h2 class="mb-3 font-display text-xl font-bold">{% trans "Remises" %}</h2>
+  <div class="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "CA brut" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.gross_revenue }} {{ report.currency }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Remises approuvées" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.discount_approved_amount }} {{ report.currency }}</p>
+      <p class="mt-1 text-xs text-ink-soft">{{ report.discount_approved_count }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "CA net" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.net_revenue }} {{ report.currency }}</p>
+    </div>
+    <div class="rounded-lg border border-line bg-white p-4">
+      <p class="text-xs uppercase tracking-wider text-ink-soft">{% trans "Refusées / en attente" %}</p>
+      <p class="mt-1 font-display text-2xl font-bold tabular-nums">{{ report.discount_rejected_count }} / {{ report.discount_pending_count }}</p>
+    </div>
+  </div>
+  <p class="mb-3 text-xs text-ink-soft">{% trans "Indicateurs opérationnels (demandeur de remise, encaissement, annulation) — pas une évaluation RH." %}</p>
+  <div class="overflow-x-auto">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>{% trans "Remise demandée par" %}</th>
+          <th class="text-right">{% trans "Nombre" %}</th>
+          <th class="text-right">{% trans "Montant" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in report.discounts_by_requester %}
+          <tr>
+            <td>{{ row.name }}</td>
+            <td class="tabular-nums text-right">{{ row.count }}</td>
+            <td class="tabular-nums text-right">{{ row.amount }} {{ report.currency }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="3" class="text-ink-soft">{% trans "Aucune remise sur la période." %}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

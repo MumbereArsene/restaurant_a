@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "==> Compiling translations"
+python manage.py compilemessages --ignore env --ignore venv || true
+
 echo "==> Running migrations"
 python manage.py migrate --noinput
 

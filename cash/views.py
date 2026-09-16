@@ -3,6 +3,8 @@ from decimal import Decimal
 
 from django import forms
 from django.contrib import messages
+from django.core.validators import MinValueValidator
+from django.db import transaction
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -11,6 +13,7 @@ from django.utils.translation import gettext_lazy
 
 from accounts.permissions import cash_access
 from core.audit import log_action
+from core.models import Restaurant
 from core.widgets import FIELD
 
 from .models import CashClosure, CashEntry
@@ -27,6 +30,10 @@ class CashEntryForm(forms.ModelForm):
                 attrs={"class": FIELD, "placeholder": gettext_lazy("Ex : achat légumes")}
             ),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["amount"].validators.append(MinValueValidator(0))
 
 
 class CashClosureForm(forms.Form):
@@ -141,17 +148,23 @@ def cash_close(request):
     form = CashClosureForm(request.POST or None, initial={"counted_amount": expected})
     if request.method == "POST" and form.is_valid():
         counted = form.cleaned_data["counted_amount"]
-        difference = counted - expected
-        closure = CashClosure.objects.create(
-            period_start=start,
-            closed_by=request.user,
-            total_in=total_in,
-            total_out=total_out,
-            expected_amount=expected,
-            counted_amount=counted,
-            difference=difference,
-            notes=form.cleaned_data["notes"],
-        )
+        with transaction.atomic():
+            Restaurant.objects.get_or_create(pk=1)
+            Restaurant.objects.select_for_update().get(pk=1)
+            start = _period_start()
+            total_in, total_out, _entries = _period_totals(start)
+            expected = total_in - total_out
+            difference = counted - expected
+            closure = CashClosure.objects.create(
+                period_start=start,
+                closed_by=request.user,
+                total_in=total_in,
+                total_out=total_out,
+                expected_amount=expected,
+                counted_amount=counted,
+                difference=difference,
+                notes=form.cleaned_data["notes"],
+            )
         log_action(
             request.user,
             "cash.close",

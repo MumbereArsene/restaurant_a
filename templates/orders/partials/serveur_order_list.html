@@ -1,0 +1,47 @@
+{% load i18n %}
+<ul class="space-y-3">
+  {% for order in orders %}
+    <li class="rounded-2xl border border-line bg-white p-4">
+      <a href="{% url 'orders:staff_detail' pk=order.pk %}" class="block">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-display text-lg font-extrabold">
+              {% trans "Table" %} {{ order.table.number }}
+              <span class="text-ink-soft">· #{{ order.pk }}</span>
+            </p>
+            <p class="mt-0.5 truncate text-sm text-ink-soft">
+              {% for item in order.items.all %}
+                {{ item.quantity }}× {{ item.dish.name_fr }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            </p>
+          </div>
+          <div class="shrink-0 text-right">
+            {% include "orders/partials/status_badge.html" %}
+            <p class="mt-1 font-display text-base font-extrabold tabular-nums">{{ order.total }} {{ CURRENCY }}</p>
+          </div>
+        </div>
+      </a>
+      <div class="mt-3 flex flex-wrap gap-1.5">
+        {% if order.status == "en_attente" %}
+          <form method="post" action="{% url 'orders:staff_advance' pk=order.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{% url 'tables:serveur_home' %}">
+            <button type="submit" class="btn-primary btn-sm">{% trans "Accepter" %}</button>
+          </form>
+        {% elif order.is_accepted_like %}
+          <form method="post" action="{% url 'orders:staff_advance' pk=order.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-primary btn-sm">{% trans "Servir" %}</button>
+          </form>
+        {% elif order.status == "servie" %}
+          <a href="{% url 'orders:staff_invoice' pk=order.pk %}" class="btn-ghost btn-sm">{% trans "Facture" %}</a>
+          <p class="w-full text-[11px] text-ink-soft">{% trans "Pour encaisser : onglet Scanner, QR de la facture." %}</p>
+        {% endif %}
+      </div>
+    </li>
+  {% empty %}
+    <li class="rounded-2xl border border-dashed border-line px-4 py-10 text-center text-sm text-ink-soft">
+      {% trans "Aucune commande en cours." %}
+    </li>
+  {% endfor %}
+</ul>

@@ -1,0 +1,18 @@
+{% load i18n %}
+<p class="text-sm font-bold">{% trans "Après avoir récupéré l’argent :" %}</p>
+<label class="flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-line bg-white p-4 has-[:checked]:border-vermilion has-[:checked]:bg-vermilion/5">
+  <input type="radio" name="{{ radio_name }}" value="1" class="mt-1 h-5 w-5 accent-vermilion"
+         {% if checked_release != "0" %}checked{% endif %}>
+  <span>
+    <span class="block font-display text-base font-extrabold">{% trans "Régler et libérer la table" %}</span>
+    <span class="mt-0.5 block text-xs text-ink-soft">{% trans "Le client part — table libre." %}</span>
+  </span>
+</label>
+<label class="flex cursor-pointer items-start gap-3 rounded-2xl border-2 border-line bg-white p-4 has-[:checked]:border-vermilion has-[:checked]:bg-vermilion/5">
+  <input type="radio" name="{{ radio_name }}" value="0" class="mt-1 h-5 w-5 accent-vermilion"
+         {% if checked_release == "0" %}checked{% endif %}>
+  <span>
+    <span class="block font-display text-base font-extrabold">{% trans "Régler seulement" %}</span>
+    <span class="mt-0.5 block text-xs text-ink-soft">{% trans "Le client n’est pas encore parti — table occupée." %}</span>
+  </span>
+</label>

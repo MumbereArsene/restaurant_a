@@ -20,6 +20,7 @@ urlpatterns = [
     path("", include("accounts.urls")),
     path("", include("tables.urls")),
     path("", include("cash.urls")),
+    path("", include("analytics.urls")),
 ]
 
 # Local / Cloudinary-off media serving

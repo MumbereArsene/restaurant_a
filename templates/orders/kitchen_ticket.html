@@ -1,4 +1,4 @@
-{% extends "staff_base.html" %}
+{% extends staff_chrome %}
 {% load i18n %}
 
 {% block title %}{% trans "Ticket cuisine" %} #{{ order.pk }}{% endblock %}
@@ -27,9 +27,7 @@
       <p class="font-display text-3xl font-extrabold">{% trans "Table" %} {{ order.table.number }}</p>
       <p class="text-sm text-ink-soft">#{{ order.pk }} · {{ order.created_at|date:"H:i" }}</p>
     </div>
-    <span class="{% if order.status == 'en_attente' %}badge-wait{% elif order.status == 'en_preparation' %}badge-prep{% elif order.status == 'prete' %}badge-ready{% else %}badge-done{% endif %}">
-      {{ order.get_status_display }}
-    </span>
+    {% include "orders/partials/status_badge.html" %}
   </div>
 
   <ul class="mt-4 space-y-3">

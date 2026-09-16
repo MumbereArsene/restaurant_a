@@ -1,0 +1,31 @@
+{% load i18n %}
+{% if oob %}
+<a href="{% url 'orders:cart' %}"
+   id="{{ badge_id }}"
+   hx-swap-oob="outerHTML"
+   class="nav-cart{% if link_class %} {{ link_class }}{% endif %}"
+   aria-label="{% trans 'Panier' %}{% if cart.count %} ({{ cart.count }}){% endif %}">
+  <span class="relative inline-flex">
+    <svg class="nav-cart__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3.5v3M10 3.5h4M4 17c0-5.5 3.4-8.5 8-8.5s8 3 8 8.5M3 17h18M5 20.5h14"/>
+    </svg>
+    {% if cart.count %}
+      <span class="nav-cart__badge">{{ cart.count }}</span>
+    {% endif %}
+  </span>
+</a>
+{% else %}
+<a href="{% url 'orders:cart' %}"
+   id="{{ badge_id }}"
+   class="nav-cart{% if link_class %} {{ link_class }}{% endif %}"
+   aria-label="{% trans 'Panier' %}{% if cart.count %} ({{ cart.count }}){% endif %}">
+  <span class="relative inline-flex">
+    <svg class="nav-cart__icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3.5v3M10 3.5h4M4 17c0-5.5 3.4-8.5 8-8.5s8 3 8 8.5M3 17h18M5 20.5h14"/>
+    </svg>
+    {% if cart.count %}
+      <span class="nav-cart__badge">{{ cart.count }}</span>
+    {% endif %}
+  </span>
+</a>
+{% endif %}

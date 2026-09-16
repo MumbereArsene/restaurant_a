@@ -1,73 +1,165 @@
-{% extends "staff_base.html" %}
+{% extends staff_chrome %}
 {% load i18n %}
 
 {% block content %}
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-  <h1 class="font-display text-3xl font-bold tracking-tight">{% trans "Commande" %} #{{ order.pk }}</h1>
-  <div class="flex flex-wrap gap-2">
+  <div>
+    <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-soft">{% trans "Commande" %}</p>
+    <h1 class="font-display text-3xl font-bold tracking-tight">#{{ order.pk }} · {% trans "Table" %} {{ order.table.number }}</h1>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    {% include "orders/partials/status_badge.html" %}
     <a href="{% url 'orders:staff_ticket' pk=order.pk %}" class="btn-ghost btn-sm">{% trans "Ticket cuisine" %}</a>
-    <a href="{% url 'orders:staff_list' %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour" %}</a>
+    {% if order.has_invoice %}
+      <a href="{% url 'orders:staff_invoice' pk=order.pk %}" class="btn-ghost btn-sm">{% trans "Facture" %}</a>
+    {% endif %}
+    <a href="{% if is_floor_serveur %}{% url 'tables:serveur_home' %}{% else %}{% url 'orders:staff_list' %}{% endif %}" class="text-sm font-medium text-ink-soft hover:text-ink">← {% trans "Retour" %}</a>
   </div>
 </div>
 
 <div class="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="rounded-lg border border-line bg-white p-4">
+  <div class="rounded-2xl border border-line bg-white p-4">
     <p class="text-xs text-ink-soft">{% trans "Table" %}</p>
-    <p class="mt-1 font-display text-xl font-bold">{{ order.table }}</p>
+    <p class="mt-1 font-display text-2xl font-extrabold">{{ order.table }}</p>
   </div>
-  <div class="rounded-lg border border-line bg-white p-4">
-    <p class="text-xs text-ink-soft">{% trans "Statut" %}</p>
-    <p class="mt-2">
-      {% if order.status == "en_attente" %}<span class="badge-wait"
-      {% elif order.status == "en_preparation" %}<span class="badge-prep"
-      {% elif order.status == "prete" %}<span class="badge-ready"
-      {% elif order.status == "servie" %}<span class="badge-done"
-      {% elif order.status == "payee" %}<span class="badge-paid"
-      {% else %}<span class="badge-cancel"
-      {% endif %}>{{ order.get_status_display }}</span>
-    </p>
-  </div>
-  <div class="rounded-lg border border-line bg-white p-4">
+  <div class="rounded-2xl border border-line bg-white p-4">
     <p class="text-xs text-ink-soft">{% trans "Total" %}</p>
-    <p class="mt-1 font-display text-xl font-bold tabular-nums">{{ order.total }} {{ CURRENCY }}</p>
+    <p class="mt-1 font-display text-2xl font-extrabold tabular-nums text-vermilion">{{ order.total }} {{ CURRENCY }}</p>
     {% if order.discount_status == "approved" and order.discount_amount %}
       <p class="mt-1 text-xs text-vermilion">−{{ order.discount_amount }} {% trans "remise" %}</p>
     {% endif %}
   </div>
-  <div class="rounded-lg border border-line bg-white p-4">
-    <p class="text-xs text-ink-soft">{{ order.created_at|date:"d/m/Y" }}</p>
+  <div class="rounded-2xl border border-line bg-white p-4">
+    <p class="text-xs text-ink-soft">{% trans "Plats" %}</p>
+    <p class="mt-1 font-display text-2xl font-extrabold">{{ order.items.count }}</p>
+  </div>
+  <div class="rounded-2xl border border-line bg-white p-4">
+    <p class="text-xs text-ink-soft">{% trans "Commandée" %}</p>
     <p class="mt-1 font-display text-xl font-bold">{{ order.created_at|date:"H:i" }}</p>
+    <p class="text-xs text-ink-soft">{{ order.created_at|date:"d/m/Y" }}</p>
   </div>
 </div>
 
-<div class="overflow-x-auto">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>{% trans "Plat" %}</th>
-        <th>{% trans "Qté" %}</th>
-        <th>{% trans "Prix" %}</th>
-        <th>{% trans "Sous-total" %}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for item in order.items.all %}
-        <tr>
-          <td>{{ item.dish.name_fr }}</td>
-          <td>{{ item.quantity }}</td>
-          <td class="tabular-nums">{{ item.unit_price }} {{ CURRENCY }}</td>
-          <td class="tabular-nums font-medium">{{ item.subtotal }} {{ CURRENCY }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+<ol class="mb-8 flex flex-wrap gap-2 text-xs font-semibold">
+  <li class="rounded-full px-3 py-1.5 {% if order.created_at %}bg-ink text-white{% else %}bg-paper text-ink-soft{% endif %}">
+    {% trans "Créée" %} · {{ order.created_at|date:"H:i" }}
+  </li>
+  <li class="rounded-full px-3 py-1.5 {% if order.accepted_at %}bg-ink text-white{% else %}bg-paper text-ink-soft{% endif %}">
+    {% trans "Acceptée" %}{% if order.accepted_at %} · {{ order.accepted_at|date:"H:i" }}{% endif %}
+  </li>
+  <li class="rounded-full px-3 py-1.5 {% if order.served_at %}bg-ink text-white{% else %}bg-paper text-ink-soft{% endif %}">
+    {% trans "Servie" %}{% if order.served_at %} · {{ order.served_at|date:"H:i" }}{% endif %}
+  </li>
+  <li class="rounded-full px-3 py-1.5 {% if order.paid_at %}bg-ink text-white{% else %}bg-paper text-ink-soft{% endif %}">
+    {% trans "Payée" %}{% if order.paid_at %} · {{ order.paid_at|date:"H:i" }}{% endif %}
+    {% if order.status == "payee" %} · {{ order.get_payment_method_display }}{% endif %}
+  </li>
+</ol>
 
-{% if order.note %}
-  <p class="mt-4 text-sm"><span class="font-semibold">{% trans "Note :" %}</span> {{ order.note }}</p>
+<h2 class="mb-3 font-display text-lg font-bold">{% trans "Ce que le client a commandé" %}</h2>
+<ul class="space-y-3">
+  {% for item in order.items.all %}
+    <li class="flex items-center gap-4 rounded-2xl border border-line bg-white p-3">
+      {% if item.dish.photo_url %}
+        <img src="{{ item.dish.photo_url }}" alt="" class="h-20 w-20 shrink-0 rounded-xl object-cover">
+      {% else %}
+        <div class="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl bg-paper-deep font-display text-2xl font-extrabold text-ink-soft">
+          {{ item.quantity }}
+        </div>
+      {% endif %}
+      <div class="min-w-0 flex-1">
+        <p class="font-display text-lg font-extrabold tracking-tight">{{ item.dish.name }}</p>
+        {% if item.note %}<p class="mt-0.5 text-sm text-ink-soft">{{ item.note }}</p>{% endif %}
+        <p class="mt-1 text-sm text-ink-soft">{{ item.quantity }} × {{ item.unit_price }} {{ CURRENCY }}</p>
+      </div>
+      <p class="shrink-0 font-display text-lg font-extrabold tabular-nums">{{ item.subtotal }} {{ CURRENCY }}</p>
+    </li>
+  {% empty %}
+    <li class="text-sm text-ink-soft">{% trans "Aucun plat." %}</li>
+  {% endfor %}
+</ul>
+
+{% if can_edit_items %}
+  <section class="mt-8 rounded-2xl border border-line bg-white p-5">
+    <h2 class="font-display text-lg font-bold">{% trans "Modifier la commande" %}</h2>
+    <p class="mt-1 text-xs text-ink-soft">
+      {% trans "Les modifications recalculent le total et réimpriment le ticket cuisine." %}
+    </p>
+
+    <ul class="mt-4 space-y-2">
+      {% for item in order.items.all %}
+        <li class="flex items-center justify-between gap-3 rounded-xl border border-line bg-paper px-3 py-2">
+          <div class="min-w-0">
+            <p class="truncate text-sm font-semibold">{{ item.dish.name }}</p>
+            <p class="text-xs text-ink-soft">{{ item.unit_price }} {{ CURRENCY }} / unité</p>
+          </div>
+          <div class="flex items-center gap-1">
+            <form method="post" action="{% url 'orders:staff_edit_item' pk=order.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="dec">
+              <input type="hidden" name="dish_id" value="{{ item.dish.pk }}">
+              <button type="submit" class="flex h-8 w-8 items-center justify-center rounded-full border border-line bg-white text-sm font-bold hover:border-ink"
+                      aria-label="{% trans 'Retirer un' %}">−</button>
+            </form>
+            <span class="min-w-6 text-center text-sm font-extrabold tabular-nums">{{ item.quantity }}</span>
+            <form method="post" action="{% url 'orders:staff_edit_item' pk=order.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="inc">
+              <input type="hidden" name="dish_id" value="{{ item.dish.pk }}">
+              <button type="submit" class="flex h-8 w-8 items-center justify-center rounded-full bg-vermilion text-sm font-extrabold text-ink hover:bg-vermilion-dark"
+                      aria-label="{% trans 'Ajouter un' %}">+</button>
+            </form>
+            <form method="post" action="{% url 'orders:staff_edit_item' pk=order.pk %}" class="ml-1">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="remove">
+              <input type="hidden" name="dish_id" value="{{ item.dish.pk }}">
+              <button type="submit" class="text-xs font-bold text-danger hover:underline">{% trans "Enlever" %}</button>
+            </form>
+          </div>
+        </li>
+      {% empty %}
+        <li class="text-sm text-ink-soft">{% trans "Aucun plat à modifier." %}</li>
+      {% endfor %}
+    </ul>
+
+    <form method="post" action="{% url 'orders:staff_edit_item' pk=order.pk %}"
+          class="mt-4 grid gap-3 rounded-xl border border-line bg-paper p-3 sm:grid-cols-[1fr_6rem_auto]">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="set">
+      <div>
+        <label class="label">{% trans "Plat" %}</label>
+        <select name="dish_id" class="field">
+          {% for dish in add_dishes %}
+            <option value="{{ dish.pk }}">{{ dish.category.name }} — {{ dish.name }} · {{ dish.price }} {{ CURRENCY }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="label">{% trans "Qté" %}</label>
+        <input type="number" name="quantity" min="1" value="1" class="field">
+      </div>
+      <div class="flex items-end">
+        <button type="submit" class="btn-ink btn-sm w-full">{% trans "Ajouter au plat" %}</button>
+      </div>
+    </form>
+  </section>
 {% endif %}
 
-{# —— Remise —— #}
+{% if order.contact_email or order.contact_phone or order.customer %}
+  <p class="mt-4 rounded-2xl bg-paper px-4 py-3 text-sm">
+    <span class="font-semibold">{% trans "Facture client :" %}</span>
+    {% if order.customer %}{% trans "Compte" %} {{ order.customer.email|default:order.customer.username }}{% endif %}
+    {% if order.contact_email %} · {{ order.contact_email }}{% endif %}
+    {% if order.contact_phone %} · WhatsApp {{ order.contact_phone }}{% endif %}
+  </p>
+{% endif %}
+
+{% if order.note %}
+  <p class="mt-4 rounded-2xl bg-paper px-4 py-3 text-sm">
+    <span class="font-semibold">{% trans "Note :" %}</span> {{ order.note }}
+  </p>
+{% endif %}
+
 {% if order.status != "payee" and order.status != "annulee" %}
   <section class="mt-8 rounded-2xl border border-line bg-white p-5">
     <h2 class="font-display text-lg font-bold">{% trans "Remise" %}</h2>
@@ -123,23 +215,24 @@
 {% endif %}
 
 <div class="mt-8 flex flex-wrap gap-2">
-  {% if order.status == "en_attente" or order.status == "en_preparation" or order.status == "prete" %}
+  {% if order.status == "en_attente" %}
     <form method="post" action="{% url 'orders:staff_advance' pk=order.pk %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{% url 'orders:staff_detail' pk=order.pk %}">
-      <button type="submit" class="btn-primary">
-        {% if order.status == "en_attente" %}{% trans "Passer en préparation" %}
-        {% elif order.status == "en_preparation" %}{% trans "Marquer prête" %}
-        {% else %}{% trans "Marquer servie" %}{% endif %}
-      </button>
+      <button type="submit" class="btn-primary">{% trans "Accepter" %}</button>
+    </form>
+  {% elif order.is_accepted_like %}
+    <form method="post" action="{% url 'orders:staff_advance' pk=order.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn-primary">{% trans "Servir" %}</button>
     </form>
   {% endif %}
+  {% if order.status == "servie" and user.can_encaisser and not is_floor_serveur %}
+    <a href="{% url 'orders:staff_pay' pk=order.pk %}" class="btn-ink">{% trans "Facture réglée" %}</a>
+  {% elif order.status == "servie" and is_floor_serveur %}
+    <a href="{% url 'tables:serveur_home' %}#scan" class="btn-ink">{% trans "Scanner pour encaisser" %}</a>
+  {% endif %}
   {% if order.status != "payee" and order.status != "annulee" %}
-    {% if user.can_encaisser %}
-      <a href="{% url 'orders:staff_pay' pk=order.pk %}" class="btn-ink">
-        {% trans "Encaisser (espèces)" %}
-      </a>
-    {% endif %}
     <form method="post" action="{% url 'orders:staff_cancel' pk=order.pk %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{% url 'orders:staff_detail' pk=order.pk %}">

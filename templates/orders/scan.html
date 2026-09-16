@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Scanner la table" %} — {{ restaurant.name }}{% endblock %}
+{% block title %}{% trans "Commander" %} — {{ restaurant.name }}{% endblock %}
 
 {% block extra_head %}
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -11,9 +11,9 @@
 <section class="mx-auto max-w-lg px-5 py-10 md:px-8">
   <div class="mb-6 text-center">
     <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-vermilion">{% trans "Dernière étape" %}</p>
-    <h1 class="mt-2 font-display text-3xl font-bold tracking-tight">{% trans "Scannez le QR de votre table" %}</h1>
+    <h1 class="mt-2 font-display text-3xl font-bold tracking-tight">{% trans "Facture et table" %}</h1>
     <p class="mt-3 text-sm leading-relaxed text-ink-soft">
-      {% trans "Pointez la caméra vers le QR collé sur la table. La commande part automatiquement." %}
+      {% trans "Indiquez comment recevoir la facture, puis scannez le QR de votre table." %}
     </p>
   </div>
 
@@ -22,25 +22,59 @@
     <span class="font-display text-lg font-bold tabular-nums">{{ cart.total }} {{ CURRENCY }}</span>
   </div>
 
-  <div id="reader" class="overflow-hidden rounded-2xl border border-line bg-black"></div>
-  <p id="scan-status" class="mt-3 text-center text-sm text-ink-soft">{% trans "Autorisez la caméra pour scanner…" %}</p>
-  <p id="scan-error" class="mt-2 hidden text-center text-sm text-danger"></p>
-
-  <form id="checkout-form" method="post" action="{% url 'orders:checkout_submit' %}" class="mt-6 space-y-3">
+  <form id="checkout-form" method="post" action="{% url 'orders:checkout_submit' %}" class="space-y-3">
     {% csrf_token %}
-    <input type="hidden" name="token" id="token-input" value="">
+    <input type="hidden" name="token" id="token-input" value="{% if preset_table %}{{ preset_table.qr_token }}{% endif %}">
+
+    <div class="rounded-2xl border border-line bg-white p-4">
+      <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">{% trans "Recevoir la facture" %}</p>
+      {% if user.is_authenticated and user.is_client_role %}
+        <p class="mt-2 text-sm">{% trans "Connecté :" %} <strong>{{ user.email|default:user.username }}</strong></p>
+        <p class="mt-1 text-xs text-ink-soft">{% trans "La facture sera dans votre compte." %}</p>
+      {% else %}
+        <label class="label mt-3" for="id_guest_phone">{% trans "WhatsApp" %}</label>
+        <input type="tel" id="id_guest_phone" name="guest_phone" class="field" placeholder="+243 …" autocomplete="tel">
+        <label class="label mt-3" for="id_guest_email">{% trans "Email" %}</label>
+        <input type="email" id="id_guest_email" name="guest_email" class="field" placeholder="vous@email.com" autocomplete="email">
+        <label class="mt-4 flex items-center gap-2 text-sm">
+          <input type="checkbox" name="create_account" value="1" id="id_create_account" class="h-4 w-4 accent-vermilion">
+          {% trans "Créer un compte pour voir mes factures" %}
+        </label>
+        <div id="password-wrap" class="mt-3 hidden">
+          <label class="label" for="id_password">{% trans "Mot de passe (8 caractères min.)" %}</label>
+          <input type="password" id="id_password" name="password" class="field" autocomplete="new-password">
+        </div>
+        <p class="mt-3 text-xs text-ink-soft">
+          {% trans "Un WhatsApp, un email, ou un compte — au moins l’un des trois." %}
+          <a href="{% url 'accounts:client_login' %}" class="font-semibold text-vermilion">{% trans "Déjà un compte ?" %}</a>
+        </p>
+      {% endif %}
+    </div>
+
     <label class="label" for="id_note">{% trans "Note pour la cuisine (optionnel)" %}</label>
     <textarea id="id_note" name="note" rows="2" class="field" placeholder="{% trans 'Sans oignon, bien cuit…' %}"></textarea>
+
+    {% if preset_table %}
+      <p class="rounded-xl bg-paper px-4 py-3 text-center text-sm font-semibold">
+        {% trans "Table" %} {{ preset_table.number }}
+      </p>
+      <button type="submit" class="btn-primary w-full py-3.5 text-base">{% trans "Envoyer la commande" %}</button>
+    {% endif %}
   </form>
 
-  <div class="mt-6 rounded-xl border border-line bg-surface p-4">
-    <p class="text-xs font-semibold uppercase tracking-wider text-ink-soft">{% trans "Caméra indisponible ?" %}</p>
-    <p class="mt-1 text-sm text-ink-soft">{% trans "Collez le lien ou le code du QR ci-dessous." %}</p>
-    <div class="mt-3 flex gap-2">
-      <input type="text" id="manual-token" class="field" placeholder="/order/… ou token">
-      <button type="button" id="manual-submit" class="btn-ink btn-sm shrink-0">{% trans "OK" %}</button>
+  {% if not preset_table %}
+    <div id="reader" class="mt-6 overflow-hidden rounded-2xl border border-line bg-black"></div>
+    <p id="scan-status" class="mt-3 text-center text-sm text-ink-soft">{% trans "Autorisez la caméra pour scanner le QR de la table…" %}</p>
+    <p id="scan-error" class="mt-2 hidden text-center text-sm text-danger"></p>
+
+    <div class="mt-6 rounded-xl border border-line bg-surface p-4">
+      <p class="text-xs font-semibold uppercase tracking-wider text-ink-soft">{% trans "Caméra indisponible ?" %}</p>
+      <div class="mt-3 flex gap-2">
+        <input type="text" id="manual-token" class="field" placeholder="/order/… ou token">
+        <button type="button" id="manual-submit" class="btn-ink btn-sm shrink-0">{% trans "OK" %}</button>
+      </div>
     </div>
-  </div>
+  {% endif %}
 
   <a href="{% url 'orders:cart' %}" class="mt-6 block text-center text-sm font-medium text-ink-soft hover:text-ink">
     ← {% trans "Retour au panier" %}
@@ -49,10 +83,16 @@
 
 <script>
 (function () {
+  const create = document.getElementById("id_create_account");
+  const wrap = document.getElementById("password-wrap");
+  if (create && wrap) {
+    create.addEventListener("change", () => wrap.classList.toggle("hidden", !create.checked));
+  }
+
+  const form = document.getElementById("checkout-form");
+  const tokenInput = document.getElementById("token-input");
   const statusEl = document.getElementById("scan-status");
   const errorEl = document.getElementById("scan-error");
-  const tokenInput = document.getElementById("token-input");
-  const form = document.getElementById("checkout-form");
   let submitting = false;
 
   function extractToken(raw) {
@@ -65,18 +105,23 @@
     return text;
   }
 
+  function showError(msg) {
+    if (!errorEl) { alert(msg); return; }
+    errorEl.textContent = msg;
+    errorEl.classList.remove("hidden");
+  }
+
   function submitToken(raw) {
     if (submitting) return;
-    const token = extractToken(raw);
+    const token = extractToken(raw) || tokenInput.value;
     if (!token) {
-      errorEl.textContent = "{% trans 'QR invalide.' %}";
-      errorEl.classList.remove("hidden");
+      showError("{% trans 'QR invalide.' %}");
       return;
     }
     submitting = true;
     tokenInput.value = token;
-    statusEl.textContent = "{% trans 'QR reconnu — envoi de la commande…' %}";
-    errorEl.classList.add("hidden");
+    if (statusEl) statusEl.textContent = "{% trans 'QR reconnu — envoi de la commande…' %}";
+    if (errorEl) errorEl.classList.add("hidden");
 
     const data = new FormData(form);
     fetch(form.action, {
@@ -91,27 +136,28 @@
           window.location.href = j.redirect;
         } else {
           submitting = false;
-          errorEl.textContent = (j && j.error) || "{% trans 'Échec. Réessayez.' %}";
-          errorEl.classList.remove("hidden");
+          showError((j && j.error) || "{% trans 'Échec. Réessayez.' %}");
         }
       })
       .catch(() => {
         submitting = false;
-        errorEl.textContent = "{% trans 'Erreur réseau. Réessayez.' %}";
-        errorEl.classList.remove("hidden");
+        showError("{% trans 'Erreur réseau. Réessayez.' %}");
       });
   }
 
-  document.getElementById("manual-submit").addEventListener("click", function () {
-    submitToken(document.getElementById("manual-token").value);
-  });
+  const manual = document.getElementById("manual-submit");
+  if (manual) {
+    manual.addEventListener("click", function () {
+      submitToken(document.getElementById("manual-token").value);
+    });
+  }
 
-  if (window.Html5Qrcode) {
+  if (!tokenInput.value && window.Html5Qrcode) {
     const scanner = new Html5Qrcode("reader");
     Html5Qrcode.getCameras()
       .then((cameras) => {
         if (!cameras || !cameras.length) {
-          statusEl.textContent = "{% trans 'Aucune caméra détectée — utilisez la saisie manuelle.' %}";
+          if (statusEl) statusEl.textContent = "{% trans 'Aucune caméra — utilisez la saisie manuelle.' %}";
           return;
         }
         const back = cameras.find((c) => /back|arrière|environment/i.test(c.label));
@@ -126,14 +172,8 @@
           () => {}
         );
       })
-      .then(() => {
-        statusEl.textContent = "{% trans 'Cadrez le QR de la table…' %}";
-      })
-      .catch(() => {
-        statusEl.textContent = "{% trans 'Caméra refusée — utilisez la saisie manuelle.' %}";
-      });
-  } else {
-    statusEl.textContent = "{% trans 'Scanner indisponible — saisie manuelle.' %}";
+      .then(() => { if (statusEl) statusEl.textContent = "{% trans 'Cadrez le QR de la table…' %}"; })
+      .catch(() => { if (statusEl) statusEl.textContent = "{% trans 'Caméra refusée — saisie manuelle.' %}"; });
   }
 })();
 </script>

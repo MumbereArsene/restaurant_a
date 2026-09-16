@@ -1,0 +1,365 @@
+# English translations for the restaurant project (Analytics + shared staff strings).
+msgid ""
+msgstr ""
+"Project-Id-Version: restaurant\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-30 04:00+0200\n"
+"PO-Revision-Date: 2026-08-30 04:00+0200\n"
+"Last-Translator: \n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Analyse"
+msgstr "Analytics"
+
+msgid "Décision"
+msgstr "Insights"
+
+msgid "Aujourd'hui"
+msgstr "Today"
+
+msgid "Hier"
+msgstr "Yesterday"
+
+msgid "7 derniers jours"
+msgstr "Last 7 days"
+
+msgid "30 derniers jours"
+msgstr "Last 30 days"
+
+msgid "Ce mois"
+msgstr "This month"
+
+msgid "Mois précédent"
+msgstr "Last month"
+
+msgid "Cette année"
+msgstr "This year"
+
+msgid "Période personnalisée"
+msgstr "Custom range"
+
+msgid "Du"
+msgstr "From"
+
+msgid "Au"
+msgstr "To"
+
+msgid "Catégorie"
+msgstr "Category"
+
+msgid "Plat"
+msgstr "Dish"
+
+msgid "Table"
+msgstr "Table"
+
+msgid "Statut"
+msgstr "Status"
+
+msgid "Toutes"
+msgstr "All"
+
+msgid "Tous"
+msgstr "All"
+
+msgid "Appliquer"
+msgstr "Apply"
+
+msgid "Excel"
+msgstr "Excel"
+
+msgid "PDF"
+msgstr "PDF"
+
+msgid "Chiffre d'affaires"
+msgstr "Revenue"
+
+msgid "Commandes"
+msgstr "Orders"
+
+msgid "Payées"
+msgstr "Paid"
+
+msgid "Annulées"
+msgstr "Cancelled"
+
+msgid "En cours"
+msgstr "In progress"
+
+msgid "Panier moyen"
+msgstr "Average ticket"
+
+msgid "CA / commandes payées"
+msgstr "Revenue / paid orders"
+
+msgid "Taux d'annulation"
+msgstr "Cancellation rate"
+
+msgid "Annulées / commandes de la période"
+msgstr "Cancelled / orders in the period"
+
+msgid "Remises"
+msgstr "Discounts"
+
+msgid "demande(s)"
+msgstr "request(s)"
+
+msgid "approuvées"
+msgstr "approved"
+
+msgid "refusées"
+msgstr "rejected"
+
+msgid "Commandes (pas de fichier client)"
+msgstr "Orders (no customer records)"
+
+msgid "L'application n'identifie pas de clients individuels."
+msgstr "The app does not identify individual customers."
+
+msgid "Précédent :"
+msgstr "Previous:"
+
+msgid "Analyse intelligente"
+msgstr "Smart analysis"
+
+msgid "Répartition des statuts"
+msgstr "Status breakdown"
+
+msgid "Commandes par heure"
+msgstr "Orders by hour"
+
+msgid "Top 5 plats (CA)"
+msgstr "Top 5 dishes (revenue)"
+
+msgid "Plats les plus vendus"
+msgstr "Best-selling dishes"
+
+msgid "Quantité"
+msgstr "Quantity"
+
+msgid "CA"
+msgstr "Revenue"
+
+msgid "% des ventes"
+msgstr "% of sales"
+
+msgid "Aucune vente payée sur cette période."
+msgstr "No paid sales in this period."
+
+msgid "Plats les moins vendus"
+msgstr "Least-sold dishes"
+
+msgid "Utile pour une promotion, un ajustement de prix ou un retrait du menu."
+msgstr "Useful for a promotion, a price change, or removing the dish."
+
+msgid "Aucun plat à comparer."
+msgstr "No dishes to compare."
+
+msgid "Performance par catégorie"
+msgstr "Category performance"
+
+msgid "Ventes"
+msgstr "Items sold"
+
+msgid "% du CA"
+msgstr "% of revenue"
+
+msgid "Aucune vente par catégorie."
+msgstr "No category sales."
+
+msgid "Tables"
+msgstr "Tables"
+
+msgid "Taux d'occupation historique indisponible : seul le statut actuel des tables est enregistré."
+msgstr "Historical occupancy is unavailable: only the current table status is stored."
+
+msgid "Tables au total :"
+msgstr "Tables in total:"
+
+msgid "Aucune commande sur cette période."
+msgstr "No orders in this period."
+
+msgid "Réservations"
+msgstr "Reservations"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Confirmées"
+msgstr "Confirmed"
+
+msgid "En attente"
+msgstr "Pending"
+
+msgid "Refusées / annulées"
+msgstr "Refused / cancelled"
+
+msgid "Personnes"
+msgstr "Guests"
+
+msgid "Caisse"
+msgstr "Cash"
+
+msgid "Entrées"
+msgstr "Inflows"
+
+msgid "Dont commandes"
+msgstr "From orders"
+
+msgid "Entrées manuelles"
+msgstr "Manual inflows"
+
+msgid "Sorties"
+msgstr "Outflows"
+
+msgid "Solde"
+msgstr "Balance"
+
+msgid "Clôtures"
+msgstr "Closures"
+
+msgid "Écarts :"
+msgstr "Gaps:"
+
+msgid "CA payé vs encaissements commandes"
+msgstr "Paid revenue vs order cash in"
+
+msgid "Écart à vérifier — Analytics ne modifie pas la caisse."
+msgstr "Gap to review — Analytics does not change cash entries."
+
+msgid "CA brut"
+msgstr "Gross revenue"
+
+msgid "Remises approuvées"
+msgstr "Approved discounts"
+
+msgid "CA net"
+msgstr "Net revenue"
+
+msgid "Refusées / en attente"
+msgstr "Rejected / pending"
+
+msgid "Indicateurs opérationnels (demandeur de remise, encaissement, annulation) — pas une évaluation RH."
+msgstr "Operational indicators (discount requester, cash-in, cancellation) — not an HR score."
+
+msgid "Remise demandée par"
+msgstr "Discount requested by"
+
+msgid "Nombre"
+msgstr "Count"
+
+msgid "Montant"
+msgstr "Amount"
+
+msgid "Aucune remise sur la période."
+msgstr "No discounts in this period."
+
+msgid "Période précédente"
+msgstr "Previous period"
+
+msgid "Indicateurs"
+msgstr "KPIs"
+
+msgid "Restaurant"
+msgstr "Restaurant"
+
+msgid "Période"
+msgstr "Period"
+
+msgid "Devise"
+msgstr "Currency"
+
+msgid "Généré le"
+msgstr "Generated at"
+
+msgid "Indicateur"
+msgstr "Metric"
+
+msgid "Actuel"
+msgstr "Current"
+
+msgid "Précédent"
+msgstr "Previous"
+
+msgid "Écart"
+msgstr "Difference"
+
+msgid "Évolution"
+msgstr "Change"
+
+msgid "CA payé"
+msgstr "Paid revenue"
+
+msgid "Commandes payées"
+msgstr "Paid orders"
+
+msgid "Commandes annulées"
+msgstr "Cancelled orders"
+
+msgid "Commandes en cours"
+msgstr "Open orders"
+
+msgid "Remises (nombre)"
+msgstr "Discounts (count)"
+
+msgid "Remises refusées"
+msgstr "Rejected discounts"
+
+msgid "Remises en attente"
+msgstr "Pending discounts"
+
+msgid "Catégories"
+msgstr "Categories"
+
+msgid "Observations"
+msgstr "Observations"
+
+msgid "Aucune observation calculable pour cette période."
+msgstr "No observation can be computed for this period."
+
+msgid "Compte supprimé"
+msgstr "Deleted account"
+
+msgid "Le chiffre d'affaires a augmenté de %(pct)s %% par rapport à la période précédente."
+msgstr "Revenue increased by %(pct)s%% compared with the previous period."
+
+msgid "Le chiffre d'affaires a diminué de %(pct)s %% par rapport à la période précédente."
+msgstr "Revenue decreased by %(pct)s%% compared with the previous period."
+
+msgid "Le chiffre d'affaires est identique à la période précédente."
+msgstr "Revenue is unchanged from the previous period."
+
+msgid "« %(name)s » représente %(pct)s %% du chiffre d'affaires."
+msgstr "“%(name)s” accounts for %(pct)s%% of revenue."
+
+msgid "La tranche %(start)02dh–%(end)02dh est la plus active (%(n)s commande(s))."
+msgstr "The %(start)02d:00–%(end)02d:00 slot is the busiest (%(n)s order(s))."
+
+msgid "Les annulations sont supérieures à la période précédente (%(now)s contre %(prev)s)."
+msgstr "Cancellations are higher than in the previous period (%(now)s vs %(prev)s)."
+
+msgid "Les remises représentent %(pct)s %% du chiffre d'affaires brut (%(amt)s)."
+msgstr "Discounts represent %(pct)s%% of gross revenue (%(amt)s)."
+
+msgid "Écart entre le CA des commandes payées et les encaissements liés aux commandes : %(amt)s."
+msgstr "Gap between paid order revenue and order-linked cash in: %(amt)s."
+
+msgid "Évolution du CA"
+msgstr "Revenue trend"
+
+msgid "Taux de confirmation"
+msgstr "Confirmation rate"
+
+msgid "Panier"
+msgstr "Cart"
+
+msgid "Retirer"
+msgstr "Remove"
+
+msgid "Retirer du panier"
+msgstr "Remove from cart"
