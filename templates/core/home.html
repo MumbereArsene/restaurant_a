@@ -24,7 +24,7 @@
       {{ restaurant.name }}
     </h1>
     <p class="reveal reveal-delay-2 mt-5 max-w-md text-base leading-relaxed text-white/70 md:text-lg">
-      {{ restaurant.description|truncatewords:20|default:_("Cuisine du marché. Commandez depuis votre téléphone, scannez la table.") }}
+      {{ restaurant.description|truncatewords:20|default:_("Cuisine du marché. Commandez depuis votre téléphone avec le code de votre table.") }}
     </p>
     <div class="reveal reveal-delay-3 mt-9 flex flex-wrap gap-3">
       <a href="{% url 'menu:public' %}" class="btn-primary px-8 py-3.5 text-base">{% trans "Commander" %}</a>
@@ -75,7 +75,7 @@
       <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-vermilion">{% trans "Salle" %}</p>
       <h2 class="mt-2 font-display text-3xl font-extrabold tracking-tight">{% trans "État des tables" %}</h2>
       <p class="mt-2 max-w-xl text-sm text-ink-soft">
-        {% trans "Une table passe en Occupée quand le client scanne pour commander. Le serveur scanne le même QR pour la libérer." %}
+        {% trans "Une table passe en Occupée quand le client saisit le code pour commander. Le serveur saisit le même code pour encaisser ou libérer." %}
       </p>
     </div>
 
@@ -104,13 +104,13 @@
           <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-vermilion font-display text-sm font-extrabold text-ink">02</span>
           <div>
             <p class="font-bold">{% trans "Cliquez sur Commander" %}</p>
-            <p class="mt-1 text-sm text-white/55">{% trans "La caméra s’ouvre pour lire le QR de votre table." %}</p>
+            <p class="mt-1 text-sm text-white/55">{% trans "Saisissez le code de 6 caractères affiché sur votre table." %}</p>
           </div>
         </li>
         <li class="flex gap-4">
           <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-vermilion font-display text-sm font-extrabold text-ink">03</span>
           <div>
-            <p class="font-bold">{% trans "Scannez — c’est envoyé" %}</p>
+            <p class="font-bold">{% trans "Saisissez le code — c’est envoyé" %}</p>
             <p class="mt-1 text-sm text-white/55">{% trans "La cuisine reçoit la commande liée à votre table." %}</p>
           </div>
         </li>

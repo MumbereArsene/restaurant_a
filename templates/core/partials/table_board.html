@@ -10,6 +10,8 @@
         <div class="rounded-2xl border p-4 text-center transition
           {% if table.status == 'occupee' %}border-vermilion/40 bg-ink text-white{% else %}border-line bg-white{% endif %}">
           <p class="font-display text-2xl font-extrabold">{{ table.number }}</p>
+          <p class="mt-0.5 font-display text-xs font-bold tracking-widest
+            {% if table.status == 'occupee' %}text-white/80{% else %}text-ink{% endif %}">{{ table.public_code }}</p>
           <p class="mt-1 text-[10px] font-bold uppercase tracking-wider
             {% if table.status == 'occupee' %}text-vermilion{% else %}text-ok{% endif %}">
             {{ table.get_status_display }}

@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "Facture" %} #{{ order.pk }} — {{ restaurant.name }}{% endblock %}
+{% block title %}{% trans "Facture" %} {{ order.invoice_ref }} — {{ restaurant.name }}{% endblock %}
 
 {% block content %}
 <section class="mx-auto max-w-sm px-5 py-12">
   <p class="text-center text-[11px] font-bold uppercase tracking-[0.22em] text-ink-soft">{{ restaurant.name }}</p>
-  <h1 class="mt-1 text-center font-display text-3xl font-extrabold">{% trans "Facture" %} #{{ order.pk }}</h1>
-  <p class="mt-1 text-center text-sm text-ink-soft">{% trans "Table" %} {{ order.table.number }} · {{ order.created_at|date:"d/m/Y H:i" }}</p>
+  <h1 class="mt-1 text-center font-display text-3xl font-extrabold">{{ order.invoice_ref }}</h1>
+  <p class="mt-1 text-center text-sm text-ink-soft">{% trans "Table" %} {{ order.table.number }} · {{ order.table.public_code }} · {{ order.created_at|date:"d/m/Y H:i" }}</p>
   <p class="mt-3 text-center">{% include "orders/partials/status_badge.html" %}</p>
 
   {% if pending %}
@@ -30,11 +30,10 @@
 
     {% if order.status == "servie" %}
       <p class="mt-6 text-center text-sm text-ink-soft">
-        {% trans "Présentez ce QR au serveur pour régler la facture." %}
+        {% trans "Présentez ce code au serveur pour régler la facture." %}
       </p>
-      <img src="{% url 'orders:invoice_qr_png' token=order.invoice_token %}"
-           alt="{% trans 'QR facture' %}"
-           class="mx-auto mt-3 h-40 w-40" width="160" height="160">
+      <p class="mt-3 text-center font-display text-4xl font-extrabold tracking-[0.28em]">{{ order.invoice_code }}</p>
+      <p class="mt-2 text-center text-xs text-ink-soft">{% trans "Table" %} {{ order.table.public_code }}</p>
       {% if user.is_authenticated and user.can_encaisser and not user.is_serveur_role %}
         <a href="{% url 'orders:staff_pay' pk=order.pk %}" class="btn-ink mt-6 w-full">{% trans "Facture réglée" %}</a>
       {% endif %}

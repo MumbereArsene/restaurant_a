@@ -22,7 +22,7 @@
         <a href="{% url 'orders:public_invoice' token=order.invoice_token %}"
            class="flex items-center justify-between gap-4 rounded-2xl border border-line bg-white p-4 transition hover:border-ink">
           <div class="min-w-0">
-            <p class="font-display text-lg font-extrabold">#{{ order.pk }} · {% trans "Table" %} {{ order.table.number }}</p>
+            <p class="font-display text-lg font-extrabold">{{ order.invoice_ref }} · {% trans "Table" %} {{ order.table.number }}</p>
             <p class="mt-0.5 truncate text-sm text-ink-soft">{{ order.created_at|date:"d/m/Y H:i" }}</p>
           </div>
           <div class="text-right">

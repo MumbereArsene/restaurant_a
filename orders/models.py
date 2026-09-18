@@ -14,6 +14,12 @@ def _new_invoice_token() -> str:
     return uuid.uuid4().hex
 
 
+def _new_invoice_code() -> str:
+    from tables.codes import generate_code
+
+    return generate_code()
+
+
 class Order(models.Model):
     class Status(models.TextChoices):
         EN_ATTENTE = "en_attente", _("En attente")
@@ -101,6 +107,13 @@ class Order(models.Model):
         default=_new_invoice_token,
         editable=False,
     )
+    invoice_code = models.CharField(
+        _("code facture"),
+        max_length=8,
+        unique=True,
+        blank=True,
+        help_text=_("Code court saisi par le serveur pour encaisser."),
+    )
     created_at = models.DateTimeField(_("créée le"), auto_now_add=True)
     accepted_at = models.DateTimeField(_("acceptée le"), null=True, blank=True)
     served_at = models.DateTimeField(_("servie le"), null=True, blank=True)
@@ -145,6 +158,33 @@ class Order(models.Model):
         if self.status in self.ACCEPTED_LIKE:
             return str(_("Acceptée"))
         return self.get_status_display()
+
+    @property
+    def order_ref(self) -> str:
+        year = self.created_at.year if self.created_at else timezone.now().year
+        return f"CMD-{year}-{self.pk:06d}" if self.pk else ""
+
+    @property
+    def invoice_ref(self) -> str:
+        year = self.created_at.year if self.created_at else timezone.now().year
+        return f"FAC-{year}-{self.pk:06d}" if self.pk else ""
+
+    def _invoice_code_taken(self, code: str) -> bool:
+        qs = type(self).objects.filter(invoice_code=code)
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        if qs.exists():
+            return True
+        from tables.models import Table
+
+        return Table.objects.filter(public_code=code).exists()
+
+    def save(self, *args, **kwargs):
+        if not self.invoice_code:
+            from tables.codes import generate_unique_code
+
+            self.invoice_code = generate_unique_code(is_taken=self._invoice_code_taken)
+        super().save(*args, **kwargs)
 
     def invoice_scan_url(self, request) -> str:
         return request.build_absolute_uri(

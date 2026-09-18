@@ -5,7 +5,8 @@
 <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
   <div>
     <p class="text-[11px] font-bold uppercase tracking-[0.2em] text-ink-soft">{% trans "Commande" %}</p>
-    <h1 class="font-display text-3xl font-bold tracking-tight">#{{ order.pk }} · {% trans "Table" %} {{ order.table.number }}</h1>
+    <h1 class="font-display text-3xl font-bold tracking-tight">{{ order.order_ref }} · {% trans "Table" %} {{ order.table.number }}</h1>
+    <p class="mt-1 text-sm text-ink-soft">{{ order.table.public_code }}{% if order.has_invoice %} · {{ order.invoice_code }} · {{ order.invoice_ref }}{% endif %}</p>
   </div>
   <div class="flex flex-wrap items-center gap-2">
     {% include "orders/partials/status_badge.html" %}
@@ -230,7 +231,7 @@
   {% if order.status == "servie" and user.can_encaisser and not is_floor_serveur %}
     <a href="{% url 'orders:staff_pay' pk=order.pk %}" class="btn-ink">{% trans "Facture réglée" %}</a>
   {% elif order.status == "servie" and is_floor_serveur %}
-    <a href="{% url 'tables:serveur_home' %}#scan" class="btn-ink">{% trans "Scanner pour encaisser" %}</a>
+    <a href="{% url 'tables:serveur_home' %}#scan" class="btn-ink">{% trans "Saisir le code pour encaisser" %}</a>
   {% endif %}
   {% if order.status != "payee" and order.status != "annulee" %}
     <form method="post" action="{% url 'orders:staff_cancel' pk=order.pk %}">

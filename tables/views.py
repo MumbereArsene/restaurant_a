@@ -36,7 +36,11 @@ def table_create(request):
     form = TableForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         table = form.save()
-        messages.success(request, _("Table %(n)s créée avec son QR code.") % {"n": table.number})
+        messages.success(
+            request,
+            _("Table %(n)s créée — code %(code)s.")
+            % {"n": table.number, "code": table.public_code},
+        )
         return redirect("tables:list")
     return render(
         request, "tables/table_form.html", {"form": form, "title": _("Nouvelle table")}
@@ -96,21 +100,17 @@ def table_regenerate_token(request, pk):
         table.regenerate_token()
         messages.success(
             request,
-            _("Nouveau QR généré pour la table %(n)s. L'ancien code est invalide.")
-            % {"n": table.number},
+            _("Nouveau code %(code)s pour la table %(n)s. L'ancien code est invalide.")
+            % {"code": table.public_code, "n": table.number},
         )
     return redirect("tables:qr_view", pk=table.pk)
 
 
 @staff_any
 def table_qr_view(request, pk):
-    """Printable page showing the QR code and its target URL."""
+    """Printable card with the public table code."""
     table = get_object_or_404(Table, pk=pk)
-    return render(
-        request,
-        "tables/table_qr.html",
-        {"table": table, "order_url": table.order_url(request)},
-    )
+    return render(request, "tables/table_qr.html", {"table": table})
 
 
 @staff_any
@@ -127,11 +127,10 @@ def table_qr_png(request, pk):
 
 
 def _extract_table_token(raw: str) -> str:
-    text = (raw or "").strip()
-    if "/order/" in text:
-        part = text.split("/order/")[-1]
-        return part.split("/")[0].split("?")[0].strip()
-    return text
+    from .codes import extract_raw_code, normalize_code
+
+    text = extract_raw_code(raw)
+    return normalize_code(text) or text
 
 
 @serveur_or_admin
@@ -172,19 +171,21 @@ def table_free_scan(request):
 @serveur_or_admin
 @require_POST
 def table_free_by_token(request):
-    """Free a table after serveur/admin scans its QR (or enters the token)."""
+    """Free a table after the waiter enters its public code."""
     from django.http import JsonResponse
     from django.urls import reverse
 
-    token = _extract_table_token(request.POST.get("token", ""))
-    table = Table.objects.filter(qr_token=token).first()
+    token = request.POST.get("token", "")
+    from .codes import resolve_table
+
+    table = resolve_table(token)
     wants_json = (
         request.headers.get("HX-Request")
         or request.headers.get("X-Requested-With") == "XMLHttpRequest"
     )
 
     if not table:
-        msg = _("QR invalide. Scannez le QR de la table.")
+        msg = _("Code table invalide.")
         if wants_json:
             return JsonResponse({"ok": False, "error": msg}, status=400)
         messages.error(request, msg)
@@ -209,7 +210,8 @@ def table_free_by_token(request):
     log_action(
         request.user,
         "table.free",
-        _("Table %(n)s libérée (scan)") % {"n": table.number},
+        _("Table %(n)s libérée (code %(code)s)")
+        % {"n": table.number, "code": table.public_code},
         object_type="Table",
         object_id=table.pk,
     )
@@ -235,8 +237,12 @@ def table_free_by_token(request):
 
 @serveur_or_admin
 def table_free_confirm(request, token):
-    """Landing when a logged-in serveur opens the physical table QR."""
-    table = get_object_or_404(Table, qr_token=token)
+    """Landing when a logged-in serveur looks up a table code."""
+    from .codes import resolve_table
+
+    table = resolve_table(token)
+    if not table:
+        table = get_object_or_404(Table, qr_token=token)
     return render(request, "tables/free_confirm.html", {"table": table})
 
 
@@ -273,3 +279,64 @@ def table_free_by_pk(request, pk):
     if next_url.startswith("/"):
         return redirect(next_url)
     return redirect(next_url)
+
+
+@serveur_or_admin
+def staff_code_lookup(request):
+    """Waiter types a table code or invoice code → pay, free, or error."""
+    from django.urls import reverse
+
+    from orders.models import Order
+
+    from .codes import resolve_order_by_code, resolve_table
+
+    raw = request.POST.get("code") or request.GET.get("code") or ""
+    release = request.POST.get("release") or request.GET.get("release") or "1"
+    if release not in ("0", "1"):
+        release = "1"
+
+    order = resolve_order_by_code(raw)
+    table = resolve_table(raw) if not order else order.table
+
+    if order:
+        if order.status == Order.Status.SERVIE:
+            url = reverse("orders:invoice_scan", kwargs={"token": order.invoice_token})
+            return redirect(f"{url}?release={release}")
+        messages.info(
+            request,
+            _("Commande %(ref)s — table %(n)s (%(code)s) : %(status)s")
+            % {
+                "ref": order.order_ref,
+                "n": order.table.number,
+                "code": order.table.public_code,
+                "status": order.get_status_display(),
+            },
+        )
+        return redirect("orders:staff_detail", pk=order.pk)
+
+    if table:
+        payable = (
+            table.orders.filter(status=Order.Status.SERVIE).order_by("-created_at").first()
+        )
+        if payable:
+            url = reverse("orders:invoice_scan", kwargs={"token": payable.invoice_token})
+            return redirect(f"{url}?release={release}")
+        if table.status == Table.Status.OCCUPEE:
+            messages.info(
+                request,
+                _(
+                    "Table %(n)s (%(code)s) occupée, aucune facture à encaisser. "
+                    "Libérez-la depuis la liste des tables si le service est terminé."
+                )
+                % {"n": table.number, "code": table.public_code},
+            )
+            return redirect("tables:serveur_home")
+        messages.info(
+            request,
+            _("Table %(n)s (%(code)s) est libre.")
+            % {"n": table.number, "code": table.public_code},
+        )
+        return redirect("tables:serveur_home")
+
+    messages.error(request, _("Aucun code table ou facture correspondant."))
+    return redirect("tables:serveur_home")

@@ -77,3 +77,45 @@ class TableOccupationTests(TestCase):
         self.client.post(reverse("tables:free_by_pk", args=[self.table.pk]))
         self.table.refresh_from_db()
         self.assertEqual(self.table.status, Table.Status.LIBRE)
+
+
+class TablePublicCodeTests(TestCase):
+    def setUp(self):
+        self.serveur = User.objects.create_user(
+            username="serveur", password="pass1234", role=User.Role.SERVEUR
+        )
+        self.table = Table.objects.create(number=12, capacity=4)
+
+    def test_public_code_allocated_on_create(self):
+        from tables.codes import CODE_ALPHABET
+
+        self.assertEqual(len(self.table.public_code), 6)
+        self.assertTrue(set(self.table.public_code) <= set(CODE_ALPHABET))
+        other = Table.objects.create(number=13, capacity=2)
+        self.assertNotEqual(self.table.public_code, other.public_code)
+
+    def test_regenerate_changes_public_code_keeps_number(self):
+        old = self.table.public_code
+        self.table.regenerate_token()
+        self.table.refresh_from_db()
+        self.assertNotEqual(self.table.public_code, old)
+        self.assertEqual(self.table.number, 12)
+
+    def test_resolve_table_normalizes_input(self):
+        from tables.codes import resolve_table
+
+        code = self.table.public_code
+        self.assertEqual(resolve_table(code.lower()).pk, self.table.pk)
+        self.assertEqual(resolve_table(f" {code[:3]}-{code[3:]} ").pk, self.table.pk)
+        self.assertEqual(resolve_table(self.table.qr_token).pk, self.table.pk)
+
+    def test_free_by_public_code(self):
+        self.table.status = Table.Status.OCCUPEE
+        self.table.save(update_fields=["status"])
+        self.client.login(username="serveur", password="pass1234")
+        r = self.client.post(
+            reverse("tables:free_by_token"), {"token": self.table.public_code}
+        )
+        self.table.refresh_from_db()
+        self.assertEqual(self.table.status, Table.Status.LIBRE)
+        self.assertEqual(r.status_code, 302)

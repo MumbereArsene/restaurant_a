@@ -5,10 +5,11 @@
 
 {% block content %}
 <div class="text-center">
-  <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-vermilion">{% trans "Scan serveur" %}</p>
+  <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-vermilion">{% trans "Code table" %}</p>
   <h1 class="mt-2 font-display text-4xl font-extrabold">
     {% blocktrans with n=table.number %}Table {{ n }}{% endblocktrans %}
   </h1>
+  <p class="mt-2 font-display text-2xl font-extrabold tracking-[0.28em]">{{ table.public_code }}</p>
   <p class="mt-3 text-sm text-ink-soft">
     {% if table.status == "occupee" %}
       {% trans "Cette table est occupée. Confirmez pour la libérer." %}

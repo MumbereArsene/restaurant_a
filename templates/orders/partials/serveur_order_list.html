@@ -7,7 +7,7 @@
           <div class="min-w-0">
             <p class="font-display text-lg font-extrabold">
               {% trans "Table" %} {{ order.table.number }}
-              <span class="text-ink-soft">· #{{ order.pk }}</span>
+              <span class="text-ink-soft">· {{ order.table.public_code }} · {{ order.order_ref }}</span>
             </p>
             <p class="mt-0.5 truncate text-sm text-ink-soft">
               {% for item in order.items.all %}
@@ -35,7 +35,7 @@
           </form>
         {% elif order.status == "servie" %}
           <a href="{% url 'orders:staff_invoice' pk=order.pk %}" class="btn-ghost btn-sm">{% trans "Facture" %}</a>
-          <p class="w-full text-[11px] text-ink-soft">{% trans "Pour encaisser : onglet Scanner, QR de la facture." %}</p>
+          <p class="w-full text-[11px] text-ink-soft">{% trans "Pour encaisser : onglet Rechercher, code facture ou code table." %}</p>
         {% endif %}
       </div>
     </li>

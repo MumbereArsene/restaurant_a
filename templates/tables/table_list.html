@@ -19,9 +19,10 @@
     <thead>
       <tr>
         <th>{% trans "N°" %}</th>
+        <th>{% trans "Code" %}</th>
         <th>{% trans "Capacité" %}</th>
         <th>{% trans "Statut" %}</th>
-        <th>{% trans "QR" %}</th>
+        <th>{% trans "Carte" %}</th>
         <th>{% trans "Actions" %}</th>
       </tr>
     </thead>
@@ -29,6 +30,7 @@
       {% for table in tables %}
         <tr>
           <td class="font-display text-lg font-bold">{{ table.number }}</td>
+          <td class="font-display font-bold tracking-widest">{{ table.public_code }}</td>
           <td>{{ table.capacity }} {% trans "pers." %}</td>
           <td>
             {% if table.status == "libre" %}<span class="badge-free">{% else %}<span class="badge-busy">{% endif %}{{ table.get_status_display }}</span>
@@ -53,7 +55,7 @@
           </td>
         </tr>
       {% empty %}
-        <tr><td colspan="5" class="text-ink-soft">{% trans "Aucune table. Créez la première." %}</td></tr>
+        <tr><td colspan="6" class="text-ink-soft">{% trans "Aucune table. Créez la première." %}</td></tr>
       {% endfor %}
     </tbody>
   </table>

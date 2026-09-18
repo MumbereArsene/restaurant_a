@@ -5,13 +5,13 @@ from . import views
 app_name = "orders"
 
 urlpatterns = [
-    # Public cart + QR checkout
+    # Public cart + table-code checkout
     path("menu/ajouter/", views.cart_add, name="cart_add"),
     path("menu/panier/", views.cart_view, name="cart"),
     path("menu/panier/modifier/", views.cart_update, name="cart_update"),
     path("menu/commander/", views.checkout_scan, name="checkout_scan"),
     path("menu/commander/valider/", views.checkout_submit, name="checkout_submit"),
-    # Printed table QR still points here
+    # Table public code (legacy qr_token still accepted)
     path("order/<str:token>/", views.order_qr_landing, name="menu"),
     path("order/<str:token>/confirmation/<str:invoice_token>/", views.order_confirmation, name="confirmation"),
     # Staff

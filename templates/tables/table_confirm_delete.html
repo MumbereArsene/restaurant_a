@@ -21,7 +21,7 @@
     <a href="{% url 'tables:list' %}" class="btn-ink mt-6 inline-flex">{% trans "Retour à la liste" %}</a>
   {% else %}
     <p class="mt-4 text-ink-soft">
-      {% trans "Cette action est définitive. Le QR code imprimé pour cette table ne fonctionnera plus." %}
+      {% trans "Cette action est définitive. L’ancien code imprimé pour cette table ne fonctionnera plus." %}
     </p>
     <form method="post" class="mt-6 flex flex-wrap gap-2">
       {% csrf_token %}

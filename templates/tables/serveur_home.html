@@ -3,10 +3,6 @@
 
 {% block title %}{% trans "Espace serveur" %} — {{ restaurant.name }}{% endblock %}
 
-{% block extra_head %}
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-{% endblock %}
-
 {% block content %}
 <div class="mb-5 grid grid-cols-3 gap-2">
   <div class="rounded-2xl bg-ink px-3 py-3 text-white">
@@ -36,24 +32,20 @@
 </section>
 
 <section id="pane-scan" data-pane class="mb-8 hidden">
-  <h2 class="font-display text-2xl font-extrabold tracking-tight">{% trans "Libérer — scanner la facture" %}</h2>
+  <h2 class="font-display text-2xl font-extrabold tracking-tight">{% trans "Rechercher" %}</h2>
   <p class="mt-1 text-sm text-ink-soft">
-    {% trans "Choisissez l’option, récupérez l’argent, puis scannez le QR de la facture." %}
+    {% trans "Saisissez le code table (ex. R8X3N6) ou le code facture imprimé." %}
   </p>
-  <div class="mt-4 space-y-3">
-    {% include "orders/partials/release_table_radios.html" with radio_name="scan_release" checked_release="1" %}
-  </div>
-  <div id="reader" class="mt-4 overflow-hidden rounded-2xl border border-line bg-black aspect-square max-h-72"></div>
-  <p id="scan-status" class="mt-3 text-center text-sm text-ink-soft">{% trans "Autorisez la caméra…" %}</p>
-  <p id="scan-error" class="mt-2 hidden text-center text-sm font-medium text-danger"></p>
-  <div class="mt-4 rounded-2xl border border-line bg-white p-4">
-    <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-ink-soft">{% trans "Saisie manuelle" %}</p>
-    <div class="mt-2 flex gap-2">
-      <input type="text" id="manual-token" class="field" placeholder="/facture/… ou token"
-             autocomplete="off" inputmode="text">
-      <button type="button" id="manual-submit" class="btn-primary btn-sm shrink-0">{% trans "OK" %}</button>
-    </div>
-  </div>
+  <form method="post" action="{% url 'tables:code_lookup' %}" class="mt-4 space-y-3">
+    {% csrf_token %}
+    {% include "orders/partials/release_table_radios.html" with radio_name="release" checked_release="1" %}
+    <label class="label" for="lookup-code">{% trans "Code" %}</label>
+    <input type="text" id="lookup-code" name="code" required
+           class="field font-display text-center text-2xl font-extrabold tracking-[0.28em] uppercase"
+           maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false"
+           placeholder="R8X3N6" inputmode="text">
+    <button type="submit" class="btn-primary w-full py-3.5 text-base">{% trans "Rechercher" %}</button>
+  </form>
 </section>
 
 <section id="pane-salle" data-pane class="mb-8 hidden">
@@ -64,11 +56,13 @@
       {% if table.status == "occupee" %}
         <div class="flex aspect-square flex-col items-center justify-center rounded-2xl bg-ink text-white ring-2 ring-vermilion/50">
           <span class="font-display text-2xl font-extrabold tabular-nums">{{ table.number }}</span>
+          <span class="mt-0.5 font-display text-[11px] font-bold tracking-widest text-vermilion">{{ table.public_code }}</span>
           <span class="mt-1 text-[9px] font-bold uppercase tracking-wider text-vermilion">{% trans "Occupée" %}</span>
         </div>
       {% else %}
         <div class="flex aspect-square flex-col items-center justify-center rounded-2xl border border-line bg-white">
           <span class="font-display text-2xl font-extrabold tabular-nums text-ink">{{ table.number }}</span>
+          <span class="mt-0.5 font-display text-[11px] font-bold tracking-widest text-ink-soft">{{ table.public_code }}</span>
           <span class="mt-1 text-[9px] font-bold uppercase tracking-wider text-ok">{% trans "Libre" %}</span>
         </div>
       {% endif %}
@@ -100,7 +94,6 @@
       a.classList.toggle("text-vermilion", on);
       a.classList.toggle("text-white/45", !on);
     });
-    if (key === "scan") startScanner();
   }
 
   function currentTab() {
@@ -110,69 +103,6 @@
 
   window.addEventListener("hashchange", () => showTab(currentTab()));
   showTab(currentTab());
-
-  let scannerStarted = false;
-  function startScanner() {
-    if (scannerStarted || !window.Html5Qrcode) return;
-    const statusEl = document.getElementById("scan-status");
-    const errorEl = document.getElementById("scan-error");
-    const reader = document.getElementById("reader");
-    if (!reader) return;
-    scannerStarted = true;
-
-    function extractInvoiceToken(raw) {
-      const text = (raw || "").trim();
-      if (!text) return "";
-      if (text.includes("/facture/")) {
-        const part = text.split("/facture/")[1] || "";
-        return part.split("/")[0].split("?")[0].replace(/\.png$/i, "").trim();
-      }
-      if (/^[a-f0-9]{32}$/i.test(text)) return text;
-      return "";
-    }
-
-    function submitToken(raw) {
-      const token = extractInvoiceToken(raw);
-      if (!token) {
-        errorEl.textContent = "{% trans 'QR invalide. Scannez le QR de la facture.' %}";
-        errorEl.classList.remove("hidden");
-        return;
-      }
-      const release = (document.querySelector('input[name="scan_release"]:checked') || {}).value || "1";
-      window.location.href = "/staff/facture/" + encodeURIComponent(token) + "/?release=" + encodeURIComponent(release);
-    }
-
-    document.getElementById("manual-submit").addEventListener("click", function () {
-      submitToken(document.getElementById("manual-token").value);
-    });
-    document.getElementById("manual-token").addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        submitToken(this.value);
-      }
-    });
-
-    const scanner = new Html5Qrcode("reader");
-    Html5Qrcode.getCameras()
-      .then((cameras) => {
-        if (!cameras || !cameras.length) {
-          statusEl.textContent = "{% trans 'Aucune caméra — utilisez la saisie.' %}";
-          return;
-        }
-        const back = cameras.find((c) => /back|arrière|environment/i.test(c.label));
-        return scanner.start(
-          (back || cameras[cameras.length - 1]).id,
-          { fps: 8, qrbox: { width: 220, height: 220 } },
-          (decoded) => {
-            scanner.stop().catch(() => {});
-            submitToken(decoded);
-          },
-          () => {}
-        );
-      })
-      .then(() => { statusEl.textContent = "{% trans 'Cadrez le QR de la facture…' %}"; })
-      .catch(() => { statusEl.textContent = "{% trans 'Caméra refusée — saisie manuelle.' %}"; });
-  }
 })();
 </script>
 {% endblock %}

@@ -9,6 +9,7 @@ urlpatterns = [
     path("staff/tables/", views.table_list, name="list"),
     path("staff/tables/liberer/", views.table_free_scan, name="free_scan"),
     path("staff/tables/liberer/valider/", views.table_free_by_token, name="free_by_token"),
+    path("staff/serveur/code/", views.staff_code_lookup, name="code_lookup"),
     path("staff/tables/liberer/<str:token>/", views.table_free_confirm, name="free_confirm"),
     path("staff/tables/<int:pk>/liberer/", views.table_free_by_pk, name="free_by_pk"),
     path("staff/tables/nouvelle/", views.table_create, name="create"),

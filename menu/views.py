@@ -13,7 +13,7 @@ from .models import Category, Dish
 
 
 def public_menu(request):
-    """Public menu: search + filters, then add to cart and Commander → scan QR."""
+    """Public menu: search + filters, then add to cart and Commander → table code."""
     q = (request.GET.get("q") or "").strip()
     cat_raw = request.GET.get("cat") or ""
     max_raw = (request.GET.get("max") or "").strip().replace(",", ".")

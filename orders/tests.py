@@ -93,7 +93,9 @@ class OrderWorkflowTests(TestCase):
         r = self.client.get(reverse("orders:staff_invoice", args=[order.pk]))
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Facture")
-        self.assertContains(r, order.invoice_token)
+        self.assertContains(r, order.invoice_code)
+        self.assertContains(r, order.invoice_ref)
+        self.assertContains(r, self.table.public_code)
         self.assertTrue(order.invoice_token)
 
         png = self.client.get(reverse("orders:invoice_qr_png", args=[order.invoice_token]))
@@ -179,7 +181,7 @@ class OrderWorkflowTests(TestCase):
         self._fill_cart()
         r = self.client.post(
             reverse("orders:checkout_submit"),
-            {"token": self.table.qr_token},
+            {"token": self.table.public_code},
             HTTP_X_REQUESTED_WITH="XMLHttpRequest",
         )
         self.assertEqual(r.status_code, 400)
@@ -189,13 +191,14 @@ class OrderWorkflowTests(TestCase):
         self._fill_cart()
         r = self.client.post(
             reverse("orders:checkout_submit"),
-            {"token": self.table.qr_token, "guest_phone": "+243900000000"},
+            {"token": self.table.public_code, "guest_phone": "+243900000000"},
         )
         self.assertEqual(Order.objects.count(), 1)
         order = Order.objects.get()
         self.assertEqual(order.guest_phone, "+243900000000")
+        self.assertTrue(order.invoice_code)
         self.assertRedirects(
-            r, reverse("orders:confirmation", args=[self.table.qr_token, order.invoice_token])
+            r, reverse("orders:confirmation", args=[self.table.public_code, order.invoice_token])
         )
 
     def test_checkout_creates_client_account(self):
@@ -203,7 +206,7 @@ class OrderWorkflowTests(TestCase):
         self.client.post(
             reverse("orders:checkout_submit"),
             {
-                "token": self.table.qr_token,
+                "token": self.table.public_code,
                 "guest_email": "ada@example.com",
                 "create_account": "1",
                 "password": "secret1234",
@@ -214,13 +217,13 @@ class OrderWorkflowTests(TestCase):
         self.assertEqual(order.customer.email, "ada@example.com")
         page = self.client.get(reverse("orders:client_invoices"))
         self.assertEqual(page.status_code, 200)
-        self.assertContains(page, f"#{order.pk}")
+        self.assertContains(page, order.invoice_ref)
 
     def test_table_qr_does_not_free_for_waiter(self):
         self.table.status = Table.Status.OCCUPEE
         self.table.save(update_fields=["status"])
         self._login("serveur")
-        r = self.client.get(reverse("orders:menu", args=[self.table.qr_token]))
+        r = self.client.get(reverse("orders:menu", args=[self.table.public_code]))
         self.assertRedirects(r, reverse("menu:public"), fetch_redirect_response=False)
         self.table.refresh_from_db()
         self.assertEqual(self.table.status, Table.Status.OCCUPEE)
@@ -232,9 +235,8 @@ class OrderWorkflowTests(TestCase):
         self.assertRedirects(r, reverse("tables:serveur_home"))
         home = self.client.get(reverse("tables:serveur_home"))
         self.assertContains(home, "Accepter")
-        self.assertContains(home, "scanner la facture")
-        self.assertContains(home, "Régler et libérer la table")
-        self.assertContains(home, "Régler seulement")
+        self.assertContains(home, "Rechercher")
+        self.assertContains(home, "Saisissez le code table")
         self.assertContains(home, "Salle")
         self.assertNotContains(home, "Facture réglée")
 
@@ -251,19 +253,20 @@ class OrderWorkflowTests(TestCase):
         order.guest_email = "secret@example.com"
         order.save(update_fields=["guest_phone", "guest_email"])
         ok = self.client.get(
-            reverse("orders:confirmation", args=[self.table.qr_token, order.invoice_token])
+            reverse("orders:confirmation", args=[self.table.public_code, order.invoice_token])
         )
         self.assertEqual(ok.status_code, 200)
-        self.assertContains(ok, f"N°{order.pk}")
+        self.assertContains(ok, order.order_ref)
+        self.assertContains(ok, self.table.public_code)
         self.assertNotContains(ok, "+243900000000")
         self.assertNotContains(ok, "secret@example.com")
         self.assertNotContains(ok, "wa.me")
         guess = self.client.get(
-            f"/order/{self.table.qr_token}/confirmation/{order.pk}/"
+            f"/order/{self.table.public_code}/confirmation/{order.pk}/"
         )
         self.assertEqual(guess.status_code, 404)
         other = self.client.get(
-            reverse("orders:confirmation", args=[self.table.qr_token, "0" * 32])
+            reverse("orders:confirmation", args=[self.table.public_code, "0" * 32])
         )
         self.assertEqual(other.status_code, 404)
 
@@ -462,3 +465,66 @@ class StaffEditTemplateTests(TestCase):
         r = self.client.get(reverse("orders:invoice_scan", args=[order.invoice_token]))
         self.assertEqual(r.status_code, 200)
         self.assertContains(r, "Espèces")
+
+
+class PublicCodeTests(TestCase):
+    def setUp(self):
+        self.serveur = User.objects.create_user(
+            username="serveur", password="pass1234", role=User.Role.SERVEUR
+        )
+        self.table = Table.objects.create(number=2, capacity=4, status=Table.Status.OCCUPEE)
+        cat = Category.objects.create(name_fr="Plats", position=1)
+        self.dish = Dish.objects.create(category=cat, name_fr="Pizza", price=Decimal("10.00"))
+
+    def _order(self, status=Order.Status.SERVIE):
+        order = Order.objects.create(table=self.table, status=status)
+        OrderItem.objects.create(
+            order=order, dish=self.dish, quantity=1, unit_price=self.dish.price
+        )
+        order.refresh_total()
+        return order
+
+    def test_table_and_invoice_codes_are_short_and_unambiguous(self):
+        from tables.codes import CODE_ALPHABET
+
+        order = self._order()
+        self.assertEqual(len(self.table.public_code), 6)
+        self.assertEqual(len(order.invoice_code), 6)
+        self.assertTrue(set(self.table.public_code) <= set(CODE_ALPHABET))
+        self.assertTrue(set(order.invoice_code) <= set(CODE_ALPHABET))
+        self.assertNotEqual(self.table.public_code, order.invoice_code)
+
+    def test_checkout_session_remembers_table_code(self):
+        session = self.client.session
+        session["cart"] = {"items": {str(self.dish.pk): 1}}
+        session.save()
+        self.client.post(
+            reverse("orders:checkout_submit"),
+            {"token": self.table.public_code.lower(), "guest_phone": "+243900000000"},
+        )
+        self.assertEqual(self.client.session["checkout_table_token"], self.table.public_code)
+        session = self.client.session
+        session["cart"] = {"items": {str(self.dish.pk): 1}}
+        session.save()
+        page = self.client.get(reverse("orders:checkout_scan"))
+        self.assertContains(page, self.table.public_code)
+
+    def test_waiter_lookup_invoice_code_opens_pay(self):
+        order = self._order()
+        self.client.login(username="serveur", password="pass1234")
+        r = self.client.post(reverse("tables:code_lookup"), {"code": order.invoice_code})
+        self.assertRedirects(
+            r,
+            reverse("orders:invoice_scan", args=[order.invoice_token]) + "?release=1",
+            fetch_redirect_response=False,
+        )
+
+    def test_waiter_lookup_table_code_opens_payable_order(self):
+        order = self._order()
+        self.client.login(username="serveur", password="pass1234")
+        r = self.client.post(reverse("tables:code_lookup"), {"code": self.table.public_code})
+        self.assertRedirects(
+            r,
+            reverse("orders:invoice_scan", args=[order.invoice_token]) + "?release=1",
+            fetch_redirect_response=False,
+        )

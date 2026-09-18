@@ -93,7 +93,7 @@ def _place_order(
             table.occupy()
 
     cart.clear()
-    request.session.pop("checkout_table_token", None)
+    request.session["checkout_table_token"] = table.public_code
     return order
 
 
@@ -147,19 +147,23 @@ def cart_view(request):
 
 
 def checkout_scan(request):
-    """Scan table QR + collect how the client wants the invoice."""
+    """Collect invoice contact + table public code."""
     cart = Cart(request)
     if not cart.count:
         messages.error(request, _("Votre panier est vide."))
         return redirect("menu:public")
+    from tables.codes import resolve_table
+
     preset = request.session.get("checkout_table_token")
-    table = Table.objects.filter(qr_token=preset).first() if preset else None
+    table = resolve_table(preset) if preset else None
     return render(request, "orders/scan.html", {"cart": cart, "preset_table": table})
 
 
 @require_POST
 def checkout_submit(request):
-    """Place the order after a valid table QR token is scanned."""
+    """Place the order after a valid table public code is entered."""
+    from tables.codes import resolve_table
+
     customer, email, phone, error = _resolve_checkout_contact(request)
     if error:
         if _wants_json(request):
@@ -168,16 +172,15 @@ def checkout_submit(request):
         return redirect("orders:checkout_scan")
 
     token = (request.POST.get("token") or request.session.get("checkout_table_token") or "").strip()
-    if "/order/" in token:
-        token = token.rstrip("/").split("/order/")[-1].split("/")[0].split("?")[0]
-
-    table = Table.objects.filter(qr_token=token).first()
+    table = resolve_table(token)
     if not table:
+        msg = _("Code table invalide. Saisissez le code affiché sur votre table.")
         if _wants_json(request):
-            return JsonResponse({"ok": False, "error": _("QR code invalide. Scannez le QR de votre table.")}, status=400)
-        messages.error(request, _("QR code invalide. Scannez le QR de votre table."))
+            return JsonResponse({"ok": False, "error": msg}, status=400)
+        messages.error(request, msg)
         return redirect("orders:checkout_scan")
 
+    request.session["checkout_table_token"] = table.public_code
     order = _place_order(
         request,
         table,
@@ -194,18 +197,22 @@ def checkout_submit(request):
         return JsonResponse(
             {
                 "ok": True,
-                "redirect": f"/order/{table.qr_token}/confirmation/{order.invoice_token}/",
+                "redirect": f"/order/{table.public_code}/confirmation/{order.invoice_token}/",
             }
         )
     return redirect(
-        "orders:confirmation", token=table.qr_token, invoice_token=order.invoice_token
+        "orders:confirmation", token=table.public_code, invoice_token=order.invoice_token
     )
 
 
 def order_confirmation(request, token, invoice_token):
-    table = get_object_or_404(Table, qr_token=token)
+    from tables.codes import resolve_table
+
+    table = resolve_table(token)
+    if not table:
+        table = get_object_or_404(Table, qr_token=token)
     order = get_object_or_404(
-        Order.objects.select_related("customer"),
+        Order.objects.select_related("customer", "table"),
         invoice_token=invoice_token,
         table=table,
     )
@@ -213,21 +220,25 @@ def order_confirmation(request, token, invoice_token):
 
 
 def order_qr_landing(request, token):
-    """Table QR is for clients only (order). Waiters scan the invoice QR."""
-    table = get_object_or_404(Table, qr_token=token)
+    """Remember the table from its public code (or legacy internal token)."""
+    from tables.codes import resolve_table
+
+    table = resolve_table(token)
+    if not table:
+        table = get_object_or_404(Table, qr_token=token)
     cart = Cart(request)
+    request.session["checkout_table_token"] = table.public_code
     if cart.count:
-        request.session["checkout_table_token"] = table.qr_token
         messages.info(
             request,
-            _("Table %(n)s — indiquez comment recevoir votre facture.")
-            % {"n": table.number},
+            _("Bienvenue à la table %(code)s (table %(n)s).")
+            % {"code": table.public_code, "n": table.number},
         )
         return redirect("orders:checkout_scan")
     messages.info(
         request,
-        _("Table %(n)s — choisissez vos plats, puis cliquez sur Commander.")
-        % {"n": table.number},
+        _("Table %(n)s — code %(code)s. Choisissez vos plats, puis Commander.")
+        % {"n": table.number, "code": table.public_code},
     )
     return redirect("menu:public")
 
@@ -427,7 +438,7 @@ def staff_order_ticket(request, pk):
 
 @staff_any
 def staff_order_invoice(request, pk):
-    """Printable invoice with QR (after the order has been served)."""
+    """Printable invoice with table/invoice codes (after the order has been served)."""
     order = get_object_or_404(_order_qs(), pk=pk)
     if not order.has_invoice:
         messages.error(request, _("Servez la commande pour générer la facture."))
@@ -450,8 +461,12 @@ def staff_invoice_qr_png(request, token):
 
 @encaisser_required
 def staff_invoice_scan(request, token):
-    """Waiter scans the invoice QR → same payment screen as Facture réglée."""
-    order = get_object_or_404(_order_qs(), invoice_token=token)
+    """Waiter entered invoice/table code → same payment screen as Facture réglée."""
+    from tables.codes import resolve_order_by_code
+
+    order = resolve_order_by_code(token)
+    if not order:
+        order = get_object_or_404(_order_qs(), invoice_token=token)
     blocked = _redirect_payment_block(request, order)
     if blocked:
         return blocked
@@ -506,7 +521,7 @@ def staff_order_pay_confirm(request, pk):
     if _is_floor_serveur(request.user):
         messages.info(
             request,
-            _("Scannez le QR de la facture pour encaisser (onglet Scanner)."),
+            _("Saisissez le code facture ou le code table (onglet Rechercher)."),
         )
         return redirect("tables:serveur_home")
     blocked = _redirect_payment_block(request, order)
@@ -530,7 +545,10 @@ def staff_order_mark_paid(request, pk):
 
     order = get_object_or_404(Order, pk=pk)
     if _is_floor_serveur(request.user) and request.POST.get("from_scan") != "1":
-        messages.error(request, _("Le serveur doit scanner le QR de la facture pour encaisser."))
+        messages.error(
+            request,
+            _("Le serveur doit saisir le code facture ou le code table pour encaisser."),
+        )
         return redirect("tables:serveur_home")
     blocked = _redirect_payment_block(request, order)
     if blocked:

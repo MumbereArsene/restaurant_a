@@ -9,10 +9,10 @@
 
   <div class="mt-4 rounded-2xl bg-ink p-6 text-white">
     <p class="text-[11px] font-bold uppercase tracking-[0.22em] text-vermilion">
-      {% if from_scan %}{% trans "QR facture scanné" %}{% else %}{% trans "Encaissement" %}{% endif %}
+      {% if from_scan %}{% trans "Code reconnu" %}{% else %}{% trans "Encaissement" %}{% endif %}
     </p>
-    <h1 class="mt-2 font-display text-3xl font-extrabold">{% trans "Commande" %} #{{ order.pk }}</h1>
-    <p class="mt-1 text-white/60">{% trans "Table" %} {{ order.table.number }} · {{ order.staff_status_label }}</p>
+    <h1 class="mt-2 font-display text-3xl font-extrabold">{{ order.order_ref }}</h1>
+    <p class="mt-1 text-white/60">{% trans "Table" %} {{ order.table.number }} · {{ order.table.public_code }} · {{ order.invoice_code }}</p>
     <p class="mt-6 font-display text-5xl font-extrabold tabular-nums text-vermilion">
       {{ order.total }} <span class="text-2xl text-white/70">{{ CURRENCY }}</span>
     </p>

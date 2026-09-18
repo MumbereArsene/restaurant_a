@@ -140,7 +140,7 @@ class Command(BaseCommand):
         for number in range(1, 5):
             _, created = Table.objects.get_or_create(number=number, defaults={"capacity": 4})
             if created:
-                self.stdout.write(self.style.SUCCESS(f"Table {number} créée avec QR token."))
+                self.stdout.write(self.style.SUCCESS(f"Table {number} créée — code {Table.objects.get(number=number).public_code}."))
 
         for pos, ((name_fr, name_en), dishes) in enumerate(MENU.items()):
             category, _ = Category.objects.get_or_create(
@@ -171,4 +171,4 @@ class Command(BaseCommand):
             "serveur/serveur1234, cuisine/cuisine1234"
         )
         for table in Table.objects.all():
-            self.stdout.write(f"  Table {table.number} -> /order/{table.qr_token}/")
+            self.stdout.write(f"  Table {table.number} → code {table.public_code}")
