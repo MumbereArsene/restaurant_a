@@ -64,8 +64,10 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
-    "cloudinary_storage",
+    # staticfiles must come first so Cloudinary does not replace collectstatic
+    # (we serve CSS/JS with WhiteNoise; Cloudinary is media only).
     "django.contrib.staticfiles",
+    "cloudinary_storage",
     "cloudinary",
     # Local apps
     "accounts",
@@ -115,7 +117,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 
 # ---------------------------------------------------------------------------
-# Database: DATABASE_URL (Neon / any Postgres) > explicit PG > SQLite
+# Database: DATABASE_URL (Railway Postgres in prod, or any Postgres) > explicit PG > SQLite
 # ---------------------------------------------------------------------------
 def _is_neon_url(url: str) -> bool:
     lowered = url.lower()
@@ -127,9 +129,20 @@ def _is_pgbouncer_url(url: str) -> bool:
     return "-pooler." in lowered or os.getenv("DB_PGBOUNCER", "").strip() == "1"
 
 
+def _is_railway_url(url: str) -> bool:
+    lowered = url.lower()
+    return "railway.app" in lowered or "rlwy.net" in lowered or "railway.internal" in lowered
+
+
 _database_url = os.getenv("DATABASE_URL", "").strip()
 if _database_url:
-    _ssl_default = "1" if _is_neon_url(_database_url) else os.getenv("DB_SSL_REQUIRE", "1")
+    # Railway public proxy and Neon need TLS. Private railway.internal often does not.
+    if _is_neon_url(_database_url):
+        _ssl_default = "1"
+    elif _is_railway_url(_database_url) and "railway.internal" in _database_url.lower():
+        _ssl_default = "0"
+    else:
+        _ssl_default = os.getenv("DB_SSL_REQUIRE", "1")
     _ssl_require = os.getenv("DB_SSL_REQUIRE", _ssl_default) == "1"
     _use_pooler = _is_pgbouncer_url(_database_url)
     # Neon pooler (PgBouncer) cannot keep persistent server-side connections.
