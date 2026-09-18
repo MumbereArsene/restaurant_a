@@ -251,6 +251,9 @@ else:
     }
     SERVE_MEDIA = os.getenv("SERVE_MEDIA", "1") == "1"
 
+# django-cloudinary-storage 0.3 still reads STATICFILES_STORAGE (removed in Django 5).
+STATICFILES_STORAGE = STORAGES["staticfiles"]["BACKEND"]
+
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
